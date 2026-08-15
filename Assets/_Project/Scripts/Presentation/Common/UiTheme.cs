@@ -16,7 +16,14 @@ namespace LastLight.Presentation.Common
         public static readonly Color Backdrop = new Color(0.055f, 0.063f, 0.094f, 1f);
         public static readonly Color Panel = new Color(0.114f, 0.129f, 0.180f, 0.94f);
         public static readonly Color PanelEdge = new Color(0.22f, 0.24f, 0.32f, 1f);
+        /// <summary>Used over a fight you can still see - clearing a stage keeps the board visible.</summary>
         public static readonly Color Overlay = new Color(0.02f, 0.02f, 0.04f, 0.88f);
+
+        /// <summary>
+        /// Used by screens that replace the fight entirely. Near-opaque on purpose: at 0.88 the
+        /// world-space actors showed through and read as stray shapes among the cards.
+        /// </summary>
+        public static readonly Color ScreenBackdrop = new Color(0.035f, 0.04f, 0.055f, 0.985f);
 
         // Text
         public static readonly Color Ink = new Color(0.94f, 0.92f, 0.86f, 1f);

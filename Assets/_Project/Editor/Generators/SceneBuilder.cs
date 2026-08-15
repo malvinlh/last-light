@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using LastLight.Gameplay.Combat;
 using LastLight.Gameplay.Run;
 using LastLight.Presentation;
 using LastLight.Presentation.Combat;
@@ -161,33 +162,41 @@ namespace LastLight.Editor.Generators
             GameObject combatRoot = UiFactory.Stretch("CombatRoot", ui);
             Transform combat = combatRoot.transform;
 
-            TextMeshProUGUI stageLabel = UiFactory.Label("StageLabel", combat, "Stage", 30f, UiTheme.Ink,
+            TextMeshProUGUI stageLabel = UiFactory.Label("StageLabel", combat, "Stage", 28f, UiTheme.Ink,
                 TextAlignmentOptions.Center, TopCenter, TopCenter, TopCenter,
-                new Vector2(0f, -26f), new Vector2(1100f, 44f));
+                new Vector2(0f, -26f), new Vector2(1100f, 44f), display: true);
 
-            TextMeshProUGUI turnLabel = UiFactory.Label("TurnLabel", combat, "Turn 1", 22f, UiTheme.Muted,
+            TextMeshProUGUI turnLabel = UiFactory.Label("TurnLabel", combat, "Turn 1", 21f, UiTheme.Muted,
                 TextAlignmentOptions.Center, TopCenter, TopCenter, TopCenter,
-                new Vector2(0f, -72f), new Vector2(500f, 34f));
+                new Vector2(0f, -70f), new Vector2(500f, 34f));
 
             // Placed just above where each actor renders. The camera never moves, so these are
             // authored positions rather than a runtime world-to-screen conversion.
             FloatingLabel playerPopup = BuildPopup("PlayerPopup", combat, new Vector2(400f, 725f));
             FloatingLabel enemyPopup = BuildPopup("EnemyPopup", combat, new Vector2(1500f, 775f));
 
+            // The tooltip sits outside every screen root and last in the canvas, so it draws on
+            // top of whatever is showing and survives switching screens.
+            TooltipView tooltip = BuildTooltip(ui);
+
             ActorView playerView = BuildActorPanel("PlayerPanel", combat, TopLeft, new Vector2(48f, -40f),
-                new Vector2(430f, 150f), playerSprite, playerPopup, out _);
+                new Vector2(430f, 124f), playerSprite, playerPopup, tooltip, out _);
 
             ActorView enemyView = BuildActorPanel("EnemyPanel", combat, TopRight, new Vector2(-48f, -40f),
-                new Vector2(430f, 208f), enemySprite, enemyPopup, out IntentView intentView);
+                new Vector2(430f, 188f), enemySprite, enemyPopup, tooltip, out IntentView intentView);
 
             TextMeshProUGUI focusLabel = BuildStatBox("FocusBox", combat, "FOCUS", UiTheme.Focus,
-                BottomLeft, new Vector2(48f, 336f), new Vector2(210f, 92f));
+                BottomLeft, new Vector2(48f, 336f), new Vector2(210f, 88f), tooltip,
+                "Focus pays for cards. It refills to full at the start of every turn, so unspent " +
+                "Focus is wasted.");
 
             TextMeshProUGUI drawLabel = BuildStatBox("DrawBox", combat, "DRAW", UiTheme.Muted,
-                BottomLeft, new Vector2(48f, 56f), new Vector2(150f, 82f));
+                BottomLeft, new Vector2(48f, 56f), new Vector2(150f, 80f), tooltip,
+                "Cards left in your draw pile. When it empties, the discard pile is shuffled back in.");
 
             TextMeshProUGUI discardLabel = BuildStatBox("DiscardBox", combat, "DISCARD", UiTheme.Muted,
-                BottomRight, new Vector2(-48f, 56f), new Vector2(150f, 82f));
+                BottomRight, new Vector2(-48f, 56f), new Vector2(150f, 80f), tooltip,
+                "Cards you have played or discarded. Your whole hand is discarded when you end a turn.");
 
             HandView handView = BuildHandTray(combat, cardPrefab);
 
@@ -225,6 +234,9 @@ namespace LastLight.Editor.Generators
             rewardRoot.SetActive(false);
             shrineRoot.SetActive(false);
             resultRoot.SetActive(false);
+
+            // Built early so the panels could be given a reference, but it has to draw last.
+            tooltip.transform.SetAsLastSibling();
 
             var eventSystem = new GameObject("EventSystem", typeof(EventSystem));
             // The project runs with both input backends enabled, so the classic module works
@@ -347,6 +359,29 @@ namespace LastLight.Editor.Generators
             return canvas;
         }
 
+        private static TooltipView BuildTooltip(Transform parent)
+        {
+            GameObject host = UiFactory.Node("Tooltip", parent, BottomLeft, BottomLeft, BottomLeft,
+                Vector2.zero, Vector2.zero);
+            var view = host.AddComponent<TooltipView>();
+
+            GameObject panel = UiFactory.Node("Panel", host.transform, BottomLeft, BottomLeft,
+                new Vector2(0f, 1f), Vector2.zero, new Vector2(400f, 90f));
+            UiFactory.Panel(panel, new Color(0.08f, 0.09f, 0.13f, 0.98f));
+
+            var group = panel.AddComponent<CanvasGroup>();
+            group.blocksRaycasts = false;
+            group.interactable = false;
+
+            TextMeshProUGUI label = UiFactory.LabelIn("Text", panel.transform, string.Empty, 20f,
+                UiTheme.Ink, TextAlignmentOptions.TopLeft, 16f);
+
+            view.Bind((RectTransform)panel.transform, label);
+            panel.SetActive(false);
+
+            return view;
+        }
+
         private static FloatingLabel BuildPopup(string name, Transform parent, Vector2 position)
         {
             GameObject go = UiFactory.Node(name, parent, BottomLeft, BottomLeft, Center, position,
@@ -366,58 +401,71 @@ namespace LastLight.Editor.Generators
         }
 
         private static ActorView BuildActorPanel(string name, Transform parent, Vector2 corner,
-            Vector2 position, Vector2 size, SpriteRenderer sprite, FloatingLabel popup, out IntentView intent)
+            Vector2 position, Vector2 size, SpriteRenderer sprite, FloatingLabel popup,
+            TooltipView tooltip, out IntentView intent)
         {
             GameObject panel = UiFactory.Node(name, parent, corner, corner, corner, position, size);
             UiFactory.Panel(panel, UiTheme.Panel);
 
-            TextMeshProUGUI nameLabel = UiFactory.Label("Name", panel.transform, name, 26f, UiTheme.Ink,
+            TextMeshProUGUI nameLabel = UiFactory.Label("Name", panel.transform, name, 24f, UiTheme.Ink,
                 TextAlignmentOptions.Left, TopLeft, TopRight, new Vector2(0.5f, 1f),
-                new Vector2(0f, -12f), new Vector2(-32f, 34f));
+                new Vector2(0f, -12f), new Vector2(-36f, 32f), display: true);
 
             GameObject barBg = UiFactory.Node("LightBar", panel.transform, TopLeft, TopRight,
-                new Vector2(0.5f, 1f), new Vector2(0f, -54f), new Vector2(-32f, 26f));
-            UiFactory.Panel(barBg, new Color(0.05f, 0.05f, 0.08f, 1f));
+                new Vector2(0.5f, 1f), new Vector2(0f, -50f), new Vector2(-36f, 28f));
+            UiFactory.Inset(barBg, new Color(0.05f, 0.05f, 0.08f, 1f));
 
-            GameObject fillGo = UiFactory.Stretch("Fill", barBg.transform, 2f);
-            var fill = fillGo.AddComponent<Image>();
-            fill.sprite = UiFactory.RoundedSprite();
-            fill.type = Image.Type.Filled;
-            fill.fillMethod = Image.FillMethod.Horizontal;
-            fill.fillOrigin = (int)Image.OriginHorizontal.Left;
-            fill.color = UiTheme.Light;
+            // The fill lives inside a padded frame and is resized by its anchors, not fillAmount.
+            GameObject frame = UiFactory.Stretch("Frame", barBg.transform, 5f);
+            GameObject fillGo = UiFactory.Node("Fill", frame.transform, Vector2.zero, Vector2.one,
+                new Vector2(0f, 0.5f), Vector2.zero, Vector2.zero);
+            Image fill = UiFactory.Solid(fillGo, UiTheme.Light);
             fill.raycastTarget = false;
 
-            TextMeshProUGUI lightLabel = UiFactory.LabelIn("LightLabel", barBg.transform, "0 / 0", 18f,
+            TextMeshProUGUI lightLabel = UiFactory.LabelIn("LightLabel", barBg.transform, "0 / 0", 17f,
                 UiTheme.Ink, TextAlignmentOptions.Center);
 
-            TextMeshProUGUI wardLabel = UiFactory.Label("WardLabel", panel.transform, "Ward 0", 20f,
-                UiTheme.Ward, TextAlignmentOptions.Left, TopLeft, TopRight, new Vector2(0.5f, 1f),
-                new Vector2(0f, -86f), new Vector2(-32f, 26f));
+            UiFactory.Tooltip(barBg, tooltip,
+                "Light is your health. It carries from one stage to the next - the run ends when it reaches zero.");
 
-            TextMeshProUGUI statusLabel = UiFactory.Label("StatusLabel", panel.transform, string.Empty, 19f,
-                UiTheme.Upgraded, TextAlignmentOptions.Left, TopLeft, TopRight, new Vector2(0.5f, 1f),
-                new Vector2(0f, -114f), new Vector2(-32f, 26f));
+            TextMeshProUGUI wardLabel = UiFactory.Label("WardLabel", panel.transform, "Ward 0", 19f,
+                UiTheme.Ward, TextAlignmentOptions.Left, TopLeft, TopLeft, TopLeft,
+                new Vector2(18f, -84f), new Vector2(150f, 26f));
+
+            UiFactory.Tooltip(wardLabel.gameObject, tooltip,
+                "Ward absorbs incoming damage. It is spent as it blocks, and whatever is left expires " +
+                "at the start of your next turn.");
+
+            TextMeshProUGUI statusLabel = UiFactory.Label("StatusLabel", panel.transform, string.Empty, 18f,
+                UiTheme.Upgraded, TextAlignmentOptions.Right, TopRight, TopRight, TopRight,
+                new Vector2(-18f, -84f), new Vector2(240f, 26f));
+
+            UiFactory.Tooltip(statusLabel.gameObject, tooltip,
+                $"{StatusInfo.Explain(StatusType.Kindled)}\n{StatusInfo.Explain(StatusType.Exposed)}");
 
             intent = null;
-            if (size.y > 180f)
+            if (size.y > 160f)
             {
                 GameObject intentBox = UiFactory.Node("Intent", panel.transform, TopLeft, TopRight,
-                    new Vector2(0.5f, 1f), new Vector2(0f, -146f), new Vector2(-32f, 54f));
+                    new Vector2(0.5f, 1f), new Vector2(0f, -118f), new Vector2(-36f, 52f));
                 Image badge = UiFactory.Panel(intentBox, UiTheme.Danger);
 
                 var group = intentBox.AddComponent<CanvasGroup>();
 
-                TextMeshProUGUI kind = UiFactory.Label("Kind", intentBox.transform, "ATTACK", 20f,
-                    UiTheme.Ink, TextAlignmentOptions.Left, BottomLeft, new Vector2(0.6f, 1f),
-                    Center, new Vector2(0f, 0f), new Vector2(-20f, -12f));
+                TextMeshProUGUI kind = UiFactory.Label("Kind", intentBox.transform, "ATTACK", 19f,
+                    UiTheme.Ink, TextAlignmentOptions.Left, BottomLeft, new Vector2(0.62f, 1f),
+                    Center, new Vector2(2f, 0f), new Vector2(-24f, -12f), display: true);
 
-                TextMeshProUGUI value = UiFactory.Label("Value", intentBox.transform, "0", 30f,
-                    UiTheme.Ink, TextAlignmentOptions.Right, new Vector2(0.6f, 0f), new Vector2(1f, 1f),
-                    Center, new Vector2(-10f, 0f), new Vector2(-20f, -8f));
+                TextMeshProUGUI value = UiFactory.Label("Value", intentBox.transform, "0", 32f,
+                    UiTheme.Ink, TextAlignmentOptions.Right, new Vector2(0.62f, 0f), new Vector2(1f, 1f),
+                    Center, new Vector2(-12f, 0f), new Vector2(-24f, -8f));
 
                 intent = intentBox.AddComponent<IntentView>();
                 intent.Bind(badge, value, kind, group);
+
+                UiFactory.Tooltip(intentBox, tooltip,
+                    "What this enemy will do on its next turn, shown a full turn ahead. The number " +
+                    "already accounts for buffs, so it is what you will actually take.");
             }
 
             var view = panel.AddComponent<ActorView>();
@@ -427,18 +475,25 @@ namespace LastLight.Editor.Generators
         }
 
         private static TextMeshProUGUI BuildStatBox(string name, Transform parent, string caption,
-            Color captionColor, Vector2 corner, Vector2 position, Vector2 size)
+            Color captionColor, Vector2 corner, Vector2 position, Vector2 size,
+            TooltipView tooltip = null, string tooltipText = null)
         {
             GameObject box = UiFactory.Node(name, parent, corner, corner, corner, position, size);
             UiFactory.Panel(box, UiTheme.Panel);
 
-            UiFactory.Label("Caption", box.transform, caption, 16f, captionColor,
+            UiFactory.Label("Caption", box.transform, caption, 15f, captionColor,
                 TextAlignmentOptions.Center, TopLeft, TopRight, new Vector2(0.5f, 1f),
-                new Vector2(0f, -6f), new Vector2(-12f, 22f));
+                new Vector2(0f, -8f), new Vector2(-12f, 20f), display: true);
 
-            return UiFactory.Label("Value", box.transform, "0", 30f, UiTheme.Ink,
+            // Deliberately NOT the display face: its numerals are stylised to the point where 7
+            // reads as a bracket and 5 reads as S. Headings can afford character; numbers cannot.
+            TextMeshProUGUI value = UiFactory.Label("Value", box.transform, "0", 30f, UiTheme.Ink,
                 TextAlignmentOptions.Center, TopLeft, TopRight, new Vector2(0.5f, 1f),
-                new Vector2(0f, -30f), new Vector2(-12f, 44f));
+                new Vector2(0f, -28f), new Vector2(-12f, 44f));
+
+            if (tooltip != null) UiFactory.Tooltip(box, tooltip, tooltipText);
+
+            return value;
         }
 
         private static HandView BuildHandTray(Transform parent, CardView cardPrefab)
@@ -504,11 +559,11 @@ namespace LastLight.Editor.Generators
             out RewardScreen screen)
         {
             GameObject root = UiFactory.Stretch("RewardRoot", parent);
-            UiFactory.Panel(root, UiTheme.Overlay, sliced: false);
+            UiFactory.Panel(root, UiTheme.ScreenBackdrop, sliced: false);
 
-            TextMeshProUGUI title = UiFactory.Label("Title", root.transform, "Salvage", 58f, UiTheme.Light,
+            TextMeshProUGUI title = UiFactory.Label("Title", root.transform, "Salvage", 54f, UiTheme.Light,
                 TextAlignmentOptions.Center, TopCenter, TopCenter, TopCenter,
-                new Vector2(0f, -110f), new Vector2(1200f, 80f));
+                new Vector2(0f, -110f), new Vector2(1200f, 80f), display: true);
 
             TextMeshProUGUI subtitle = UiFactory.Label("Subtitle", root.transform, string.Empty, 26f,
                 UiTheme.Muted, TextAlignmentOptions.Center, TopCenter, TopCenter, TopCenter,
@@ -531,11 +586,11 @@ namespace LastLight.Editor.Generators
             out ShrineScreen screen)
         {
             GameObject root = UiFactory.Stretch("ShrineRoot", parent);
-            UiFactory.Panel(root, UiTheme.Overlay, sliced: false);
+            UiFactory.Panel(root, UiTheme.ScreenBackdrop, sliced: false);
 
-            TextMeshProUGUI title = UiFactory.Label("Title", root.transform, "The Old Shrine", 54f,
+            TextMeshProUGUI title = UiFactory.Label("Title", root.transform, "The Old Shrine", 50f,
                 UiTheme.Light, TextAlignmentOptions.Center, TopCenter, TopCenter, TopCenter,
-                new Vector2(0f, -70f), new Vector2(1200f, 74f));
+                new Vector2(0f, -70f), new Vector2(1200f, 74f), display: true);
 
             TextMeshProUGUI prompt = UiFactory.Label("Prompt", root.transform, string.Empty, 24f,
                 UiTheme.Muted, TextAlignmentOptions.Center, TopCenter, TopCenter, TopCenter,
@@ -553,8 +608,8 @@ namespace LastLight.Editor.Generators
                 TopCenter, TopCenter, TopCenter, new Vector2(330f, -206f), new Vector2(300f, 70f),
                 out _, 24f);
 
-            CardTray tray = BuildTray("Tray", root.transform, cardPrefab, new Vector2(0f, -70f),
-                new Vector2(1500f, 560f), columns: 6, scale: 0.55f);
+            CardTray tray = BuildTray("Tray", root.transform, cardPrefab, new Vector2(0f, -50f),
+                new Vector2(1460f, 460f), columns: 7, scale: 0.62f);
 
             Button leave = UiFactory.Button("LeaveButton", root.transform, "Leave without resting",
                 UiTheme.PanelEdge, BottomCenter, BottomCenter, BottomCenter, new Vector2(0f, 60f),
@@ -571,9 +626,9 @@ namespace LastLight.Editor.Generators
             GameObject root = UiFactory.Stretch("RunResultRoot", parent);
             UiFactory.Panel(root, new Color(0.02f, 0.02f, 0.04f, 0.97f), sliced: false);
 
-            TextMeshProUGUI title = UiFactory.Label("Title", root.transform, "Run Over", 72f, UiTheme.Light,
+            TextMeshProUGUI title = UiFactory.Label("Title", root.transform, "Run Over", 66f, UiTheme.Light,
                 TextAlignmentOptions.Center, TopCenter, TopCenter, TopCenter,
-                new Vector2(0f, -90f), new Vector2(1400f, 96f));
+                new Vector2(0f, -90f), new Vector2(1400f, 96f), display: true);
 
             TextMeshProUGUI subtitle = UiFactory.Label("Subtitle", root.transform, string.Empty, 26f,
                 UiTheme.Muted, TextAlignmentOptions.Center, TopCenter, TopCenter, TopCenter,
