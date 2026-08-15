@@ -36,6 +36,8 @@ namespace LastLight.Editor.Generators
         public const string CardPrefabPath = PrefabsFolder + "/CardView.prefab";
         public const string MaterialsFolder = "Assets/_Project/Art/Materials";
         public const string SpriteMaterialPath = MaterialsFolder + "/SpriteUnlit.mat";
+        public const string GeneratedArtFolder = "Assets/_Project/Art/Generated";
+        public const string ActorSpritePath = GeneratedArtFolder + "/Actor_Disc.png";
         public const string RunConfigPath = "Assets/_Project/Data/Run/RunConfig_LastLight.asset";
 
         private static readonly Vector2 Center = new Vector2(0.5f, 0.5f);
@@ -52,8 +54,10 @@ namespace LastLight.Editor.Generators
             EnsureFolder(ScenesFolder);
             EnsureFolder(PrefabsFolder);
             EnsureFolder(MaterialsFolder);
+            EnsureFolder(GeneratedArtFolder);
 
             Material spriteMaterial = EnsureSpriteMaterial();
+            EnsureActorSprite();
             CardView cardPrefab = BuildCardPrefab();
             BuildGameScene(cardPrefab, spriteMaterial);
             RegisterScenesInBuildSettings();
@@ -148,8 +152,10 @@ namespace LastLight.Editor.Generators
                 TextAlignmentOptions.Center, TopCenter, TopCenter, TopCenter,
                 new Vector2(0f, -72f), new Vector2(500f, 34f));
 
-            FloatingLabel playerPopup = BuildPopup("PlayerPopup", ui, new Vector2(410f, 690f));
-            FloatingLabel enemyPopup = BuildPopup("EnemyPopup", ui, new Vector2(1505f, 730f));
+            // Placed just above where each actor renders. The camera never moves, so these are
+            // authored positions rather than a runtime world-to-screen conversion.
+            FloatingLabel playerPopup = BuildPopup("PlayerPopup", ui, new Vector2(400f, 725f));
+            FloatingLabel enemyPopup = BuildPopup("EnemyPopup", ui, new Vector2(1500f, 775f));
 
             ActorView playerView = BuildActorPanel("PlayerPanel", ui, TopLeft, new Vector2(48f, -40f),
                 new Vector2(430f, 150f), playerSprite, playerPopup, out _);
@@ -216,18 +222,19 @@ namespace LastLight.Editor.Generators
         private static (SpriteRenderer player, SpriteRenderer enemy) BuildStage(Material spriteMaterial)
         {
             var stage = new GameObject("Stage");
+            Sprite disc = EnsureActorSprite();
 
             SpriteRenderer player = BuildActorSprite("PlayerActor", stage.transform,
-                new Vector3(-5.6f, 0.2f, 0f), 3.0f, UiTheme.Lampwright, spriteMaterial);
+                new Vector3(-5.6f, 0.2f, 0f), 1.0f, UiTheme.Lampwright, spriteMaterial, disc);
 
             SpriteRenderer enemy = BuildActorSprite("EnemyActor", stage.transform,
-                new Vector3(5.4f, 0.5f, 0f), 3.6f, new Color(0.45f, 0.42f, 0.62f), spriteMaterial);
+                new Vector3(5.4f, 0.5f, 0f), 1.15f, new Color(0.45f, 0.42f, 0.62f), spriteMaterial, disc);
 
             return (player, enemy);
         }
 
         private static SpriteRenderer BuildActorSprite(string name, Transform parent, Vector3 position,
-            float scale, Color tint, Material material)
+            float scale, Color tint, Material material, Sprite sprite)
         {
             var go = new GameObject(name);
             go.transform.SetParent(parent, false);
@@ -235,11 +242,62 @@ namespace LastLight.Editor.Generators
             go.transform.localScale = Vector3.one * scale;
 
             var renderer = go.AddComponent<SpriteRenderer>();
-            renderer.sprite = UiFactory.CircleSprite();
+            renderer.sprite = sprite != null ? sprite : UiFactory.CircleSprite();
             renderer.color = tint;
             if (material != null) renderer.sharedMaterial = material;
 
             return renderer;
+        }
+
+        /// <summary>
+        /// Draws the placeholder actor sprite: a 256px soft-edged disc.
+        /// </summary>
+        /// <remarks>
+        /// Unity's built-in Knob sprite is only a handful of pixels, so using it for a character
+        /// means either a speck or a blurry mess once scaled to a readable size. Generating a
+        /// disc at a sensible resolution costs nothing, imports as a normal sprite asset, and is
+        /// swapped for real art later by changing this one call.
+        /// </remarks>
+        private static Sprite EnsureActorSprite()
+        {
+            var existing = AssetDatabase.LoadAssetAtPath<Sprite>(ActorSpritePath);
+            if (existing != null) return existing;
+
+            const int size = 256;
+            const float softEdge = 0.05f;
+
+            var texture = new Texture2D(size, size, TextureFormat.RGBA32, false);
+            float radius = size * 0.5f;
+
+            for (int y = 0; y < size; y++)
+            {
+                for (int x = 0; x < size; x++)
+                {
+                    float dx = x - radius + 0.5f;
+                    float dy = y - radius + 0.5f;
+                    float distance = Mathf.Sqrt((dx * dx) + (dy * dy)) / radius;
+
+                    // Fade the last few percent of the radius so the edge is not stair-stepped.
+                    float alpha = Mathf.Clamp01((1f - distance) / softEdge);
+                    texture.SetPixel(x, y, new Color(1f, 1f, 1f, alpha));
+                }
+            }
+
+            texture.Apply();
+            File.WriteAllBytes(ActorSpritePath, texture.EncodeToPNG());
+            UnityEngine.Object.DestroyImmediate(texture);
+
+            AssetDatabase.ImportAsset(ActorSpritePath, ImportAssetOptions.ForceSynchronousImport);
+
+            var importer = (TextureImporter)AssetImporter.GetAtPath(ActorSpritePath);
+            importer.textureType = TextureImporterType.Sprite;
+            importer.spriteImportMode = SpriteImportMode.Single;
+            importer.spritePixelsPerUnit = 100f;
+            importer.alphaIsTransparency = true;
+            importer.mipmapEnabled = false;
+            importer.SaveAndReimport();
+
+            return AssetDatabase.LoadAssetAtPath<Sprite>(ActorSpritePath);
         }
 
         private static Canvas BuildCanvas()
