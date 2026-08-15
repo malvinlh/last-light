@@ -50,6 +50,7 @@ namespace LastLight.Editor.Generators
         public const string SpriteMaterialPath = MaterialsFolder + "/SpriteUnlit.mat";
         public const string GeneratedArtFolder = "Assets/_Project/Art/Generated";
         public const string ActorSpritePath = GeneratedArtFolder + "/Actor_Disc.png";
+        public const string HaloSpritePath = GeneratedArtFolder + "/Actor_Halo.png";
         public const string RunConfigPath = "Assets/_Project/Data/Run/RunConfig_LastLight.asset";
 
         private static readonly Vector2 Center = new Vector2(0.5f, 0.5f);
@@ -70,6 +71,7 @@ namespace LastLight.Editor.Generators
 
             Material spriteMaterial = EnsureSpriteMaterial();
             EnsureActorSprite();
+            EnsureHaloSprite();
             CardView cardPrefab = BuildCardPrefab();
             BuildGameScene(cardPrefab, spriteMaterial);
             BuildMainMenuScene();
@@ -267,27 +269,56 @@ namespace LastLight.Editor.Generators
             var stage = new GameObject("Stage");
             Sprite disc = EnsureActorSprite();
 
-            SpriteRenderer player = BuildActorSprite("PlayerActor", stage.transform,
-                new Vector3(-5.6f, 0.2f, 0f), 1.0f, UiTheme.Lampwright, spriteMaterial, disc);
+            SpriteRenderer player = BuildActor("PlayerActor", stage.transform,
+                new Vector3(-5.6f, 0.2f, 0f), 1.0f, UiTheme.Lampwright, spriteMaterial, disc,
+                phaseOffset: 0f);
 
-            SpriteRenderer enemy = BuildActorSprite("EnemyActor", stage.transform,
-                new Vector3(5.4f, 0.5f, 0f), 1.15f, new Color(0.45f, 0.42f, 0.62f), spriteMaterial, disc);
+            SpriteRenderer enemy = BuildActor("EnemyActor", stage.transform,
+                new Vector3(5.4f, 0.5f, 0f), 1.15f, new Color(0.45f, 0.42f, 0.62f), spriteMaterial, disc,
+                phaseOffset: 1.7f);
 
             return (player, enemy);
         }
 
-        private static SpriteRenderer BuildActorSprite(string name, Transform parent, Vector3 position,
-            float scale, Color tint, Material material, Sprite sprite)
+        /// <summary>
+        /// Builds one actor as a pivot with a sprite and a halo beneath it.
+        /// </summary>
+        /// <remarks>
+        /// The three-object split is required rather than decorative. ActorIdleMotion drifts the
+        /// pivot while ActorView shakes the sprite; if both wrote one transform the shake would
+        /// walk the actor off its mark. Returns the sprite child, so ActorView binds exactly what
+        /// it did before.
+        /// </remarks>
+        private static SpriteRenderer BuildActor(string name, Transform parent, Vector3 position,
+            float scale, Color tint, Material material, Sprite sprite, float phaseOffset)
         {
-            var go = new GameObject(name);
-            go.transform.SetParent(parent, false);
-            go.transform.localPosition = position;
-            go.transform.localScale = Vector3.one * scale;
+            Sprite disc = sprite != null ? sprite : UiFactory.CircleSprite();
 
-            var renderer = go.AddComponent<SpriteRenderer>();
-            renderer.sprite = sprite != null ? sprite : UiFactory.CircleSprite();
+            var pivot = new GameObject(name);
+            pivot.transform.SetParent(parent, false);
+            pivot.transform.localPosition = position;
+            pivot.transform.localScale = Vector3.one * scale;
+
+            var haloGo = new GameObject("Halo");
+            haloGo.transform.SetParent(pivot.transform, false);
+            haloGo.transform.localScale = Vector3.one * 1.65f;
+
+            var halo = haloGo.AddComponent<SpriteRenderer>();
+            halo.sprite = EnsureHaloSprite();
+            halo.color = new Color(tint.r, tint.g, tint.b, 0.18f);
+            halo.sortingOrder = -1;
+            if (material != null) halo.sharedMaterial = material;
+
+            var spriteGo = new GameObject("Sprite");
+            spriteGo.transform.SetParent(pivot.transform, false);
+
+            var renderer = spriteGo.AddComponent<SpriteRenderer>();
+            renderer.sprite = disc;
             renderer.color = tint;
+            renderer.sortingOrder = 0;
             if (material != null) renderer.sharedMaterial = material;
+
+            pivot.AddComponent<ActorIdleMotion>().Bind(halo, phaseOffset, 0.12f, 3.2f);
 
             return renderer;
         }
@@ -301,9 +332,31 @@ namespace LastLight.Editor.Generators
         /// disc at a sensible resolution costs nothing, imports as a normal sprite asset, and is
         /// swapped for real art later by changing this one call.
         /// </remarks>
-        private static Sprite EnsureActorSprite()
+        private static Sprite EnsureActorSprite() =>
+            EnsureRadialSprite(ActorSpritePath, solid: true);
+
+        /// <summary>
+        /// The glow behind an actor: alpha falls off smoothly from the centre.
+        /// </summary>
+        /// <remarks>
+        /// A separate sprite from the actor disc rather than the same one scaled up. Reusing the
+        /// disc gave the halo the disc's hard edge, so it read as a second solid circle sitting
+        /// behind the first instead of light coming off something.
+        /// </remarks>
+        private static Sprite EnsureHaloSprite() =>
+            EnsureRadialSprite(HaloSpritePath, solid: false);
+
+        /// <summary>
+        /// Draws a 256px radial sprite - either a disc with a clean edge, or a soft glow.
+        /// </summary>
+        /// <remarks>
+        /// Unity's built-in Knob sprite is only a handful of pixels, so using it for a character
+        /// means either a speck or a blurry mess once scaled to a readable size. Generating these
+        /// at a sensible resolution costs nothing and they import as normal sprite assets.
+        /// </remarks>
+        private static Sprite EnsureRadialSprite(string path, bool solid)
         {
-            var existing = AssetDatabase.LoadAssetAtPath<Sprite>(ActorSpritePath);
+            var existing = AssetDatabase.LoadAssetAtPath<Sprite>(path);
             if (existing != null) return existing;
 
             const int size = 256;
@@ -320,19 +373,23 @@ namespace LastLight.Editor.Generators
                     float dy = y - radius + 0.5f;
                     float distance = Mathf.Sqrt((dx * dx) + (dy * dy)) / radius;
 
-                    // Fade the last few percent of the radius so the edge is not stair-stepped.
-                    float alpha = Mathf.Clamp01((1f - distance) / softEdge);
+                    float alpha = solid
+                        // Fade the last few percent of the radius so the edge is not stair-stepped.
+                        ? Mathf.Clamp01((1f - distance) / softEdge)
+                        // Squared falloff reads as light rather than as a flat circle.
+                        : Mathf.Pow(Mathf.Clamp01(1f - distance), 2.2f);
+
                     texture.SetPixel(x, y, new Color(1f, 1f, 1f, alpha));
                 }
             }
 
             texture.Apply();
-            File.WriteAllBytes(ActorSpritePath, texture.EncodeToPNG());
+            File.WriteAllBytes(path, texture.EncodeToPNG());
             UnityEngine.Object.DestroyImmediate(texture);
 
-            AssetDatabase.ImportAsset(ActorSpritePath, ImportAssetOptions.ForceSynchronousImport);
+            AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceSynchronousImport);
 
-            var importer = (TextureImporter)AssetImporter.GetAtPath(ActorSpritePath);
+            var importer = (TextureImporter)AssetImporter.GetAtPath(path);
             importer.textureType = TextureImporterType.Sprite;
             importer.spriteImportMode = SpriteImportMode.Single;
             importer.spritePixelsPerUnit = 100f;
@@ -340,7 +397,7 @@ namespace LastLight.Editor.Generators
             importer.mipmapEnabled = false;
             importer.SaveAndReimport();
 
-            return AssetDatabase.LoadAssetAtPath<Sprite>(ActorSpritePath);
+            return AssetDatabase.LoadAssetAtPath<Sprite>(path);
         }
 
         private static Canvas BuildCanvas()
@@ -361,11 +418,14 @@ namespace LastLight.Editor.Generators
 
         private static TooltipView BuildTooltip(Transform parent)
         {
-            GameObject host = UiFactory.Node("Tooltip", parent, BottomLeft, BottomLeft, BottomLeft,
+            // Anchored at the canvas centre so the panel's anchoredPosition shares an origin
+            // with canvas-local space, which is what TooltipView computes in. Anchoring this at a
+            // corner is what put every tooltip half a screen away from the cursor.
+            GameObject host = UiFactory.Node("Tooltip", parent, Center, Center, Center,
                 Vector2.zero, Vector2.zero);
             var view = host.AddComponent<TooltipView>();
 
-            GameObject panel = UiFactory.Node("Panel", host.transform, BottomLeft, BottomLeft,
+            GameObject panel = UiFactory.Node("Panel", host.transform, Center, Center,
                 new Vector2(0f, 1f), Vector2.zero, new Vector2(400f, 90f));
             UiFactory.Panel(panel, new Color(0.08f, 0.09f, 0.13f, 0.98f));
 
@@ -409,7 +469,7 @@ namespace LastLight.Editor.Generators
 
             TextMeshProUGUI nameLabel = UiFactory.Label("Name", panel.transform, name, 24f, UiTheme.Ink,
                 TextAlignmentOptions.Left, TopLeft, TopRight, new Vector2(0.5f, 1f),
-                new Vector2(0f, -12f), new Vector2(-36f, 32f), display: true);
+                new Vector2(0f, -12f), new Vector2(-36f, 32f));
 
             GameObject barBg = UiFactory.Node("LightBar", panel.transform, TopLeft, TopRight,
                 new Vector2(0.5f, 1f), new Vector2(0f, -50f), new Vector2(-36f, 28f));
@@ -454,7 +514,7 @@ namespace LastLight.Editor.Generators
 
                 TextMeshProUGUI kind = UiFactory.Label("Kind", intentBox.transform, "ATTACK", 19f,
                     UiTheme.Ink, TextAlignmentOptions.Left, BottomLeft, new Vector2(0.62f, 1f),
-                    Center, new Vector2(2f, 0f), new Vector2(-24f, -12f), display: true);
+                    Center, new Vector2(2f, 0f), new Vector2(-24f, -12f));
 
                 TextMeshProUGUI value = UiFactory.Label("Value", intentBox.transform, "0", 32f,
                     UiTheme.Ink, TextAlignmentOptions.Right, new Vector2(0.62f, 0f), new Vector2(1f, 1f),
@@ -483,7 +543,7 @@ namespace LastLight.Editor.Generators
 
             UiFactory.Label("Caption", box.transform, caption, 15f, captionColor,
                 TextAlignmentOptions.Center, TopLeft, TopRight, new Vector2(0.5f, 1f),
-                new Vector2(0f, -8f), new Vector2(-12f, 20f), display: true);
+                new Vector2(0f, -8f), new Vector2(-12f, 20f));
 
             // Deliberately NOT the display face: its numerals are stylised to the point where 7
             // reads as a bracket and 5 reads as S. Headings can afford character; numbers cannot.
@@ -693,8 +753,8 @@ namespace LastLight.Editor.Generators
             Canvas canvas = BuildCanvas();
             Transform ui = canvas.transform;
 
-            UiFactory.Label("Title", ui, "LAST LIGHT", 108f, UiTheme.Light, TextAlignmentOptions.Center,
-                Center, Center, Center, new Vector2(0f, 210f), new Vector2(1400f, 150f));
+            UiFactory.Label("Title", ui, "LAST LIGHT", 104f, UiTheme.Light, TextAlignmentOptions.Center,
+                Center, Center, Center, new Vector2(0f, 210f), new Vector2(1400f, 150f), display: true);
 
             UiFactory.Label("Tagline", ui,
                 "You are the last Lampwright. Hold the light for three nights.", 28f, UiTheme.Muted,
