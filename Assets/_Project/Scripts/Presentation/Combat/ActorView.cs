@@ -62,11 +62,21 @@ namespace LastLight.Presentation.Combat
             if (combatant == null) return;
 
             if (lightLabel != null) lightLabel.text = $"{combatant.Light} / {combatant.MaxLight}";
+
             if (lightFill != null)
             {
-                lightFill.fillAmount = combatant.MaxLight <= 0
+                float fraction = combatant.MaxLight <= 0
                     ? 0f
                     : Mathf.Clamp01((float)combatant.Light / combatant.MaxLight);
+
+                // The bar is resized by its right anchor rather than Image.fillAmount. A filled
+                // sliced sprite squeezes its own rounded corners into a lens shape as it shrinks;
+                // a plain rect anchored to a fraction of its parent stays a clean bar.
+                var rect = (RectTransform)lightFill.transform;
+                rect.anchorMin = Vector2.zero;
+                rect.anchorMax = new Vector2(fraction, 1f);
+                rect.offsetMin = Vector2.zero;
+                rect.offsetMax = Vector2.zero;
             }
 
             if (wardLabel != null)
