@@ -46,5 +46,7 @@ namespace LastLight.Gameplay.Effects
             if (inner == null) return string.Empty;
             return $"{inner.Describe(upgraded)} Repeat {AmountFor(upgraded)} times in total.";
         }
+
+        public override string Signature() => $"{base.Signature()}[{(inner == null ? "none" : inner.Signature())}]";
     }
 }

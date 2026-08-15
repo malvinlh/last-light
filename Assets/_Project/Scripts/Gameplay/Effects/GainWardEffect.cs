@@ -23,5 +23,7 @@ namespace LastLight.Gameplay.Effects
             context.GainWard(context.Resolve(target), AmountFor(context.Upgraded));
 
         public override string Describe(bool upgraded) => $"Gain {AmountFor(upgraded)} Ward.";
+
+        public override string Signature() => $"{base.Signature()}->{target}";
     }
 }

@@ -91,6 +91,46 @@ namespace LastLight.Gameplay.Run
             shrineMendAmount = mendAmount;
             minimumDeckSize = minDeckSize;
         }
+
+        /// <summary>This asset's authored content as a comparable string.</summary>
+        public string ContentSignature() =>
+            BuildSignature(startingLight, combatRules, starterDeck, rewardPool, nodes,
+                rewardChoiceCount, shrineMendAmount, minimumDeckSize);
+
+        /// <summary>The same fingerprint from loose values, so the generator can skip an unchanged run.</summary>
+        public static string BuildSignature(int light, CombatRules rules, IEnumerable<StarterDeckEntry> starter,
+            IEnumerable<CardDefinition> rewards, IEnumerable<RunNodeDefinition> runNodes,
+            int rewardChoices, int mendAmount, int minDeckSize)
+        {
+            var builder = new System.Text.StringBuilder();
+            builder.Append(light).Append('|').Append(rules?.HandSize ?? 0).Append('|').Append(rules?.FocusPerTurn ?? 0)
+                .Append('|').Append(rewardChoices).Append('|').Append(mendAmount).Append('|').Append(minDeckSize);
+
+            if (starter != null)
+            {
+                foreach (StarterDeckEntry entry in starter)
+                {
+                    builder.Append("|S:").Append(entry?.Card != null ? entry.Card.Id : "null")
+                        .Append('x').Append(entry?.Count ?? 0);
+                }
+            }
+
+            if (rewards != null)
+            {
+                foreach (CardDefinition card in rewards) builder.Append("|R:").Append(card != null ? card.Id : "null");
+            }
+
+            if (runNodes != null)
+            {
+                foreach (RunNodeDefinition node in runNodes)
+                {
+                    builder.Append("|N:").Append(node == null ? "null" : $"{node.Kind}:{node.Title}:{node.Subtitle}:" +
+                        $"{(node.Enemy != null ? node.Enemy.Id : "none")}");
+                }
+            }
+
+            return builder.ToString();
+        }
 #endif
     }
 }

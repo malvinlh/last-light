@@ -50,5 +50,19 @@ namespace LastLight.Gameplay.Enemies
 
         /// <summary>Whether this action's telegraphed number should be run through the damage pipeline.</summary>
         public bool IsAttack => intent == IntentKind.Attack;
+
+        /// <summary>This action's authored content as a comparable string, for the editor generators.</summary>
+        public string Signature()
+        {
+            var builder = new System.Text.StringBuilder();
+            builder.Append(label).Append(':').Append(intent);
+
+            for (int i = 0; i < effects.Count; i++)
+            {
+                builder.Append(',').Append(effects[i] == null ? "null" : effects[i].Signature());
+            }
+
+            return builder.ToString();
+        }
     }
 }

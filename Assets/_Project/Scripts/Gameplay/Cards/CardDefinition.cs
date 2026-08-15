@@ -89,6 +89,37 @@ namespace LastLight.Gameplay.Cards
         }
 
         public void SetArtwork(Sprite sprite) => artwork = sprite;
+
+        /// <summary>This asset's authored content as a comparable string.</summary>
+        public string ContentSignature() =>
+            BuildSignature(id, displayName, cost, cardType, effects, upgradable, flavorText);
+
+        /// <summary>
+        /// The same fingerprint computed from loose values, so a generator can ask "would
+        /// writing this change anything?" without touching the asset.
+        /// </summary>
+        /// <remarks>
+        /// This exists because [SerializeReference] mints fresh reference ids every time the
+        /// effect list is replaced. Rewriting an unchanged asset therefore produces a diff of
+        /// pure id churn, which makes real changes hard to spot in review.
+        /// </remarks>
+        public static string BuildSignature(string cardId, string cardDisplayName, int cardCost, CardType type,
+            IEnumerable<CardEffect> cardEffects, bool canUpgrade, string flavor)
+        {
+            var builder = new StringBuilder();
+            builder.Append(cardId).Append('|').Append(cardDisplayName).Append('|').Append(cardCost)
+                .Append('|').Append(type).Append('|').Append(canUpgrade).Append('|').Append(flavor);
+
+            if (cardEffects != null)
+            {
+                foreach (CardEffect effect in cardEffects)
+                {
+                    builder.Append('|').Append(effect == null ? "null" : effect.Signature());
+                }
+            }
+
+            return builder.ToString();
+        }
 #endif
     }
 }

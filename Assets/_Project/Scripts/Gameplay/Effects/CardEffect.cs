@@ -40,5 +40,16 @@ namespace LastLight.Gameplay.Effects
 
         /// <summary>One sentence of player-facing rules text for this effect.</summary>
         public abstract string Describe(bool upgraded);
+
+        /// <summary>
+        /// A fingerprint of this effect's authored content, used by the editor generators to
+        /// tell whether an asset actually needs rewriting.
+        /// </summary>
+        /// <remarks>
+        /// Each subclass appends its own fields rather than a central helper switching on type.
+        /// A new effect that forgets to override this still produces a usable fingerprint from
+        /// its magnitudes, so the worst case is a redundant rewrite rather than a stale asset.
+        /// </remarks>
+        public virtual string Signature() => $"{GetType().Name}({amount}/{upgradedAmount})";
     }
 }

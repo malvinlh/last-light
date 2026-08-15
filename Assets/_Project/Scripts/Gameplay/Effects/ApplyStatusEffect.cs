@@ -37,5 +37,7 @@ namespace LastLight.Gameplay.Effects
                 ? $"Gain {stacks} {name}."
                 : $"Apply {stacks} {name}.";
         }
+
+        public override string Signature() => $"{base.Signature()}:{status}->{target}";
     }
 }

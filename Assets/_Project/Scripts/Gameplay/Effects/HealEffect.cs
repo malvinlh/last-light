@@ -23,5 +23,7 @@ namespace LastLight.Gameplay.Effects
             context.Heal(context.Resolve(target), AmountFor(context.Upgraded));
 
         public override string Describe(bool upgraded) => $"Restore {AmountFor(upgraded)} Light.";
+
+        public override string Signature() => $"{base.Signature()}->{target}";
     }
 }

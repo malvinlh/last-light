@@ -45,6 +45,29 @@ namespace LastLight.Gameplay.Enemies
         }
 
         public void SetArtwork(Sprite sprite) => artwork = sprite;
+
+        /// <summary>This asset's authored content as a comparable string.</summary>
+        public string ContentSignature() =>
+            BuildSignature(id, displayName, maxLight, pattern, description, tint);
+
+        /// <summary>The same fingerprint from loose values, so the generator can skip unchanged assets.</summary>
+        public static string BuildSignature(string enemyId, string enemyName, int light,
+            IEnumerable<EnemyAction> actions, string enemyDescription, Color enemyTint)
+        {
+            var builder = new System.Text.StringBuilder();
+            builder.Append(enemyId).Append('|').Append(enemyName).Append('|').Append(light)
+                .Append('|').Append(enemyDescription).Append('|').Append(enemyTint);
+
+            if (actions != null)
+            {
+                foreach (EnemyAction action in actions)
+                {
+                    builder.Append('|').Append(action == null ? "null" : action.Signature());
+                }
+            }
+
+            return builder.ToString();
+        }
 #endif
     }
 }

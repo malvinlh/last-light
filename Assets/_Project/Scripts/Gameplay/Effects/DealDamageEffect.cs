@@ -25,5 +25,7 @@ namespace LastLight.Gameplay.Effects
         public override string Describe(bool upgraded) => target == EffectTargeting.Self
             ? $"Take {AmountFor(upgraded)} damage."
             : $"Deal {AmountFor(upgraded)} damage.";
+
+        public override string Signature() => $"{base.Signature()}->{target}";
     }
 }

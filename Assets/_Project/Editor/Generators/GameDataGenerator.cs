@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using LastLight.Gameplay.Cards;
 using LastLight.Gameplay.Combat;
+using LastLight.Gameplay.Effects;
 using LastLight.Gameplay.Enemies;
 using LastLight.Gameplay.Run;
 using UnityEditor;
@@ -14,9 +15,14 @@ namespace LastLight.Editor.Generators
     /// Turns the C# catalogs into the ScriptableObject assets the game actually loads.
     /// </summary>
     /// <remarks>
-    /// Idempotent by design: existing assets are reconfigured in place rather than deleted and
-    /// recreated, so their GUIDs survive and every reference from the RunConfig, scenes and
-    /// prefabs stays intact. Running this twice produces no diff.
+    /// Idempotent by design, in two senses. Existing assets are reconfigured in place rather
+    /// than deleted and recreated, so their GUIDs survive and every reference from the
+    /// RunConfig, scenes and prefabs stays intact. And an asset whose authored content already
+    /// matches the catalog is left completely untouched.
+    ///
+    /// That second part is not cosmetic. [SerializeReference] mints new reference ids whenever
+    /// the effect list is replaced, so unconditionally rewriting every asset produces a diff of
+    /// pure id churn on every run - enough noise to hide a real change during review.
     ///
     /// Order matters - cards, then enemies, then the run config that references both.
     /// </remarks>
@@ -27,9 +33,18 @@ namespace LastLight.Editor.Generators
         public const string RunFolder = "Assets/_Project/Data/Run";
         public const string RunConfigPath = RunFolder + "/RunConfig_LastLight.asset";
 
+        /// <summary>Counts of what a generation pass actually had to change.</summary>
+        private static int assetsCreated;
+        private static int assetsUpdated;
+        private static int assetsUnchanged;
+
         [MenuItem("Last Light/Generate Game Data", priority = 0)]
         public static void GenerateAll()
         {
+            assetsCreated = 0;
+            assetsUpdated = 0;
+            assetsUnchanged = 0;
+
             try
             {
                 AssetDatabase.StartAssetEditing();
@@ -45,8 +60,8 @@ namespace LastLight.Editor.Generators
                 AssetDatabase.Refresh();
             }
 
-            Debug.Log($"[LastLight] Generated {CardCatalog.All.Count} cards, {EnemyCatalog.All.Count} enemies " +
-                      $"and the run config.");
+            Debug.Log($"[LastLight] Game data generated: {assetsCreated} created, {assetsUpdated} updated, " +
+                      $"{assetsUnchanged} already up to date.");
         }
 
         /// <summary>Entry point for `-executeMethod`. Sets a non-zero exit code if anything throws.</summary>
@@ -76,10 +91,22 @@ namespace LastLight.Editor.Generators
                 string path = $"{CardsFolder}/{blueprint.AssetName}.asset";
                 CardDefinition asset = LoadOrCreate<CardDefinition>(path);
 
-                asset.Configure(blueprint.Id, blueprint.DisplayName, blueprint.Cost, blueprint.Type,
-                    blueprint.Effects(), blueprint.Upgradable, blueprint.Flavor);
+                CardEffect[] effects = blueprint.Effects();
+                string desired = CardDefinition.BuildSignature(blueprint.Id, blueprint.DisplayName, blueprint.Cost,
+                    blueprint.Type, effects, blueprint.Upgradable, blueprint.Flavor);
 
-                EditorUtility.SetDirty(asset);
+                if (asset.ContentSignature() != desired)
+                {
+                    asset.Configure(blueprint.Id, blueprint.DisplayName, blueprint.Cost, blueprint.Type,
+                        effects, blueprint.Upgradable, blueprint.Flavor);
+                    EditorUtility.SetDirty(asset);
+                    assetsUpdated++;
+                }
+                else
+                {
+                    assetsUnchanged++;
+                }
+
                 byId[blueprint.Id] = asset;
             }
 
@@ -98,10 +125,22 @@ namespace LastLight.Editor.Generators
                 string path = $"{EnemiesFolder}/{blueprint.AssetName}.asset";
                 EnemyDefinition asset = LoadOrCreate<EnemyDefinition>(path);
 
-                asset.Configure(blueprint.Id, blueprint.DisplayName, blueprint.MaxLight, blueprint.Pattern(),
-                    blueprint.Description, blueprint.Tint);
+                EnemyAction[] pattern = blueprint.Pattern();
+                string desired = EnemyDefinition.BuildSignature(blueprint.Id, blueprint.DisplayName,
+                    blueprint.MaxLight, pattern, blueprint.Description, blueprint.Tint);
 
-                EditorUtility.SetDirty(asset);
+                if (asset.ContentSignature() != desired)
+                {
+                    asset.Configure(blueprint.Id, blueprint.DisplayName, blueprint.MaxLight, pattern,
+                        blueprint.Description, blueprint.Tint);
+                    EditorUtility.SetDirty(asset);
+                    assetsUpdated++;
+                }
+                else
+                {
+                    assetsUnchanged++;
+                }
+
                 byId[blueprint.Id] = asset;
             }
 
@@ -150,17 +189,28 @@ namespace LastLight.Editor.Generators
                     "It has been waiting since the lighthouse was raised.", Enemy(enemies, "devouring_dark"))
             };
 
-            config.Configure(
-                light: 50,
-                rules: new CombatRules(handSize: 5, focusPerTurn: 3),
-                starter: starter,
-                rewards: rewardPool,
-                runNodes: nodes,
-                rewardChoices: 3,
-                mendAmount: 12,
-                minDeckSize: 5);
+            var rules = new CombatRules(handSize: 5, focusPerTurn: 3);
+            string desired = RunConfig.BuildSignature(50, rules, starter, rewardPool, nodes, 3, 12, 5);
 
-            EditorUtility.SetDirty(config);
+            if (config.ContentSignature() != desired)
+            {
+                config.Configure(
+                    light: 50,
+                    rules: rules,
+                    starter: starter,
+                    rewards: rewardPool,
+                    runNodes: nodes,
+                    rewardChoices: 3,
+                    mendAmount: 12,
+                    minDeckSize: 5);
+
+                EditorUtility.SetDirty(config);
+                assetsUpdated++;
+            }
+            else
+            {
+                assetsUnchanged++;
+            }
         }
 
         private static EnemyDefinition Enemy(IReadOnlyDictionary<string, EnemyDefinition> enemies, string id)
@@ -188,6 +238,7 @@ namespace LastLight.Editor.Generators
 
             asset = ScriptableObject.CreateInstance<T>();
             AssetDatabase.CreateAsset(asset, assetPath);
+            assetsCreated++;
             return asset;
         }
     }
