@@ -9,8 +9,12 @@
 /[Ll]ibrary/
 /[Tt]emp/
 /[Oo]bj/
-/[Bb]uild/
+# NOTE: /Build/ is deliberately NOT ignored. The technical test requires the
+# Windows build to ship inside the repository under /Build. Only Unity's
+# non-shippable side-output folders are excluded below.
 /[Bb]uilds/
+[Bb]uild/**/*_BurstDebugInformation_DoNotShip/
+[Bb]uild/**/*_BackUpThisFolder_ButDontShipItWithYourGame/
 /[Ll]ogs/
 /[Uu]ser[Ss]ettings/
 *.log
@@ -104,3 +108,6 @@ InitTestScene*.unity*
 
 # Auto-generated cache in Assets folder
 /[Aa]ssets/[Ss]ceneDependencyCache*
+
+.vscode/
+Doc/

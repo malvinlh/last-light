@@ -1,0 +1,48 @@
+# Line-ending and diff policy for a Unity project on Windows.
+# Unity writes its YAML assets with LF; normalising them keeps diffs readable
+# and prevents the whole project from churning on a different machine.
+
+* text=auto eol=lf
+
+# --- Unity text assets: always LF, always diffable -------------------------
+*.cs            text eol=lf diff=csharp
+*.shader        text eol=lf
+*.cginc         text eol=lf
+*.hlsl          text eol=lf
+*.uss           text eol=lf
+*.uxml          text eol=lf
+*.asmdef        text eol=lf
+*.asmref        text eol=lf
+*.json          text eol=lf
+*.md            text eol=lf
+*.txt           text eol=lf
+*.yml           text eol=lf
+
+# Unity serialised assets (Force Text mode). Marked as text so history is
+# reviewable, but with merge=union disabled - these must be merged by hand.
+*.unity         text eol=lf -merge
+*.prefab        text eol=lf -merge
+*.asset         text eol=lf -merge
+*.mat           text eol=lf -merge
+*.anim          text eol=lf -merge
+*.controller    text eol=lf -merge
+*.meta          text eol=lf -merge
+*.inputactions  text eol=lf
+*.scenetemplate text eol=lf
+
+# --- Binary: never normalise, never try to diff ----------------------------
+*.png           binary
+*.jpg           binary
+*.jpeg          binary
+*.gif           binary
+*.ico           binary
+*.ttf           binary
+*.otf           binary
+*.wav           binary
+*.mp3           binary
+*.ogg           binary
+*.dll           binary
+*.exe           binary
+*.pdb           binary
+*.zip           binary
+*.unitypackage  binary
