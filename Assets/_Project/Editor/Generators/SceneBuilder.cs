@@ -4,6 +4,7 @@ using LastLight.Gameplay.Run;
 using LastLight.Presentation;
 using LastLight.Presentation.Combat;
 using LastLight.Presentation.Common;
+using LastLight.Presentation.Run;
 using TMPro;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -40,6 +41,8 @@ namespace LastLight.Editor.Generators
     {
         public const string ScenesFolder = "Assets/_Project/Scenes";
         public const string GameScenePath = ScenesFolder + "/Game.unity";
+        public const string MainMenuScenePath = ScenesFolder + "/MainMenu.unity";
+        public const string MainMenuSceneName = "MainMenu";
         public const string PrefabsFolder = "Assets/_Project/Prefabs";
         public const string CardPrefabPath = PrefabsFolder + "/CardView.prefab";
         public const string MaterialsFolder = "Assets/_Project/Art/Materials";
@@ -68,6 +71,7 @@ namespace LastLight.Editor.Generators
             EnsureActorSprite();
             CardView cardPrefab = BuildCardPrefab();
             BuildGameScene(cardPrefab, spriteMaterial);
+            BuildMainMenuScene();
             RegisterScenesInBuildSettings();
 
             AssetDatabase.SaveAssets();
@@ -152,56 +156,75 @@ namespace LastLight.Editor.Generators
             Canvas canvas = BuildCanvas();
             Transform ui = canvas.transform;
 
-            TextMeshProUGUI stageLabel = UiFactory.Label("StageLabel", ui, "Stage", 30f, UiTheme.Ink,
+            // Each screen is a root that the router toggles. The combat stage sprites stay
+            // visible behind the others on purpose - the run never leaves the lighthouse.
+            GameObject combatRoot = UiFactory.Stretch("CombatRoot", ui);
+            Transform combat = combatRoot.transform;
+
+            TextMeshProUGUI stageLabel = UiFactory.Label("StageLabel", combat, "Stage", 30f, UiTheme.Ink,
                 TextAlignmentOptions.Center, TopCenter, TopCenter, TopCenter,
                 new Vector2(0f, -26f), new Vector2(1100f, 44f));
 
-            TextMeshProUGUI turnLabel = UiFactory.Label("TurnLabel", ui, "Turn 1", 22f, UiTheme.Muted,
+            TextMeshProUGUI turnLabel = UiFactory.Label("TurnLabel", combat, "Turn 1", 22f, UiTheme.Muted,
                 TextAlignmentOptions.Center, TopCenter, TopCenter, TopCenter,
                 new Vector2(0f, -72f), new Vector2(500f, 34f));
 
             // Placed just above where each actor renders. The camera never moves, so these are
             // authored positions rather than a runtime world-to-screen conversion.
-            FloatingLabel playerPopup = BuildPopup("PlayerPopup", ui, new Vector2(400f, 725f));
-            FloatingLabel enemyPopup = BuildPopup("EnemyPopup", ui, new Vector2(1500f, 775f));
+            FloatingLabel playerPopup = BuildPopup("PlayerPopup", combat, new Vector2(400f, 725f));
+            FloatingLabel enemyPopup = BuildPopup("EnemyPopup", combat, new Vector2(1500f, 775f));
 
-            ActorView playerView = BuildActorPanel("PlayerPanel", ui, TopLeft, new Vector2(48f, -40f),
+            ActorView playerView = BuildActorPanel("PlayerPanel", combat, TopLeft, new Vector2(48f, -40f),
                 new Vector2(430f, 150f), playerSprite, playerPopup, out _);
 
-            ActorView enemyView = BuildActorPanel("EnemyPanel", ui, TopRight, new Vector2(-48f, -40f),
+            ActorView enemyView = BuildActorPanel("EnemyPanel", combat, TopRight, new Vector2(-48f, -40f),
                 new Vector2(430f, 208f), enemySprite, enemyPopup, out IntentView intentView);
 
-            TextMeshProUGUI focusLabel = BuildStatBox("FocusBox", ui, "FOCUS", UiTheme.Focus,
+            TextMeshProUGUI focusLabel = BuildStatBox("FocusBox", combat, "FOCUS", UiTheme.Focus,
                 BottomLeft, new Vector2(48f, 336f), new Vector2(210f, 92f));
 
-            TextMeshProUGUI drawLabel = BuildStatBox("DrawBox", ui, "DRAW", UiTheme.Muted,
+            TextMeshProUGUI drawLabel = BuildStatBox("DrawBox", combat, "DRAW", UiTheme.Muted,
                 BottomLeft, new Vector2(48f, 56f), new Vector2(150f, 82f));
 
-            TextMeshProUGUI discardLabel = BuildStatBox("DiscardBox", ui, "DISCARD", UiTheme.Muted,
+            TextMeshProUGUI discardLabel = BuildStatBox("DiscardBox", combat, "DISCARD", UiTheme.Muted,
                 BottomRight, new Vector2(-48f, 56f), new Vector2(150f, 82f));
 
-            HandView handView = BuildHandTray(ui, cardPrefab);
+            HandView handView = BuildHandTray(combat, cardPrefab);
 
-            Button endTurn = UiFactory.Button("EndTurnButton", ui, "End Turn", UiTheme.SkillCard,
+            Button endTurn = UiFactory.Button("EndTurnButton", combat, "End Turn", UiTheme.SkillCard,
                 BottomRight, BottomRight, BottomRight, new Vector2(-48f, 336f), new Vector2(240f, 84f),
                 out _, 28f);
 
-            ToastView toast = BuildToast(ui);
-            ResultOverlay overlay = BuildResultOverlay(ui);
+            ToastView toast = BuildToast(combat);
+            ResultOverlay overlay = BuildResultOverlay(combat);
 
             var screenGo = new GameObject("CombatScreen");
-            screenGo.transform.SetParent(ui, false);
+            screenGo.transform.SetParent(combat, false);
             var combatScreen = screenGo.AddComponent<CombatScreen>();
             combatScreen.Bind(playerView, enemyView, handView, intentView, toast, overlay,
                 stageLabel, turnLabel, focusLabel, drawLabel, discardLabel, endTurn);
+
+            GameObject rewardRoot = BuildRewardScreen(ui, cardPrefab, out RewardScreen rewardScreen);
+            GameObject shrineRoot = BuildShrineScreen(ui, cardPrefab, out ShrineScreen shrineScreen);
+            GameObject resultRoot = BuildRunResultScreen(ui, out RunResultScreen runResultScreen);
+
+            var routerGo = new GameObject("ScreenRouter");
+            routerGo.transform.SetParent(ui, false);
+            var router = routerGo.AddComponent<ScreenRouter>();
+            router.Bind(combatRoot, rewardRoot, shrineRoot, resultRoot);
 
             var sessionGo = new GameObject("GameSession");
             var session = sessionGo.AddComponent<GameSession>();
             var runConfig = AssetDatabase.LoadAssetAtPath<RunConfig>(RunConfigPath);
             if (runConfig == null) Debug.LogError($"[LastLight] Missing run config at {RunConfigPath}.");
-            session.Bind(runConfig, combatScreen);
+            session.Bind(runConfig, router, combatScreen, rewardScreen, shrineScreen, runResultScreen,
+                MainMenuSceneName);
 
             BuildDebugPanel(ui, session);
+
+            rewardRoot.SetActive(false);
+            shrineRoot.SetActive(false);
+            resultRoot.SetActive(false);
 
             var eventSystem = new GameObject("EventSystem", typeof(EventSystem));
             // The project runs with both input backends enabled, so the classic module works
@@ -475,6 +498,177 @@ namespace LastLight.Editor.Generators
             return overlay;
         }
 
+        // ---------------------------------------------------------------- run screens
+
+        private static GameObject BuildRewardScreen(Transform parent, CardView cardPrefab,
+            out RewardScreen screen)
+        {
+            GameObject root = UiFactory.Stretch("RewardRoot", parent);
+            UiFactory.Panel(root, UiTheme.Overlay, sliced: false);
+
+            TextMeshProUGUI title = UiFactory.Label("Title", root.transform, "Salvage", 58f, UiTheme.Light,
+                TextAlignmentOptions.Center, TopCenter, TopCenter, TopCenter,
+                new Vector2(0f, -110f), new Vector2(1200f, 80f));
+
+            TextMeshProUGUI subtitle = UiFactory.Label("Subtitle", root.transform, string.Empty, 26f,
+                UiTheme.Muted, TextAlignmentOptions.Center, TopCenter, TopCenter, TopCenter,
+                new Vector2(0f, -186f), new Vector2(1100f, 60f));
+
+            CardTray tray = BuildTray("Tray", root.transform, cardPrefab, new Vector2(0f, 20f),
+                new Vector2(1000f, 340f), columns: 3, scale: 1f);
+
+            Button skip = UiFactory.Button("SkipButton", root.transform, "Take nothing", UiTheme.PanelEdge,
+                BottomCenter, BottomCenter, BottomCenter, new Vector2(0f, 120f), new Vector2(320f, 76f),
+                out _, 26f);
+
+            screen = root.AddComponent<RewardScreen>();
+            screen.Bind(tray, title, subtitle, skip);
+
+            return root;
+        }
+
+        private static GameObject BuildShrineScreen(Transform parent, CardView cardPrefab,
+            out ShrineScreen screen)
+        {
+            GameObject root = UiFactory.Stretch("ShrineRoot", parent);
+            UiFactory.Panel(root, UiTheme.Overlay, sliced: false);
+
+            TextMeshProUGUI title = UiFactory.Label("Title", root.transform, "The Old Shrine", 54f,
+                UiTheme.Light, TextAlignmentOptions.Center, TopCenter, TopCenter, TopCenter,
+                new Vector2(0f, -70f), new Vector2(1200f, 74f));
+
+            TextMeshProUGUI prompt = UiFactory.Label("Prompt", root.transform, string.Empty, 24f,
+                UiTheme.Muted, TextAlignmentOptions.Center, TopCenter, TopCenter, TopCenter,
+                new Vector2(0f, -142f), new Vector2(1200f, 56f));
+
+            Button upgrade = UiFactory.Button("UpgradeButton", root.transform, "Sharpen a card",
+                UiTheme.SkillCard, TopCenter, TopCenter, TopCenter, new Vector2(-330f, -206f),
+                new Vector2(300f, 70f), out _, 24f);
+
+            Button remove = UiFactory.Button("RemoveButton", root.transform, "Let go of a card",
+                UiTheme.AttackCard, TopCenter, TopCenter, TopCenter, new Vector2(0f, -206f),
+                new Vector2(300f, 70f), out _, 24f);
+
+            Button mend = UiFactory.Button("MendButton", root.transform, "Rest", UiTheme.PanelEdge,
+                TopCenter, TopCenter, TopCenter, new Vector2(330f, -206f), new Vector2(300f, 70f),
+                out _, 24f);
+
+            CardTray tray = BuildTray("Tray", root.transform, cardPrefab, new Vector2(0f, -70f),
+                new Vector2(1500f, 560f), columns: 6, scale: 0.55f);
+
+            Button leave = UiFactory.Button("LeaveButton", root.transform, "Leave without resting",
+                UiTheme.PanelEdge, BottomCenter, BottomCenter, BottomCenter, new Vector2(0f, 60f),
+                new Vector2(400f, 70f), out TextMeshProUGUI leaveLabel, 24f);
+
+            screen = root.AddComponent<ShrineScreen>();
+            screen.Bind(tray, title, prompt, upgrade, remove, mend, leave, leaveLabel);
+
+            return root;
+        }
+
+        private static GameObject BuildRunResultScreen(Transform parent, out RunResultScreen screen)
+        {
+            GameObject root = UiFactory.Stretch("RunResultRoot", parent);
+            UiFactory.Panel(root, new Color(0.02f, 0.02f, 0.04f, 0.97f), sliced: false);
+
+            TextMeshProUGUI title = UiFactory.Label("Title", root.transform, "Run Over", 72f, UiTheme.Light,
+                TextAlignmentOptions.Center, TopCenter, TopCenter, TopCenter,
+                new Vector2(0f, -90f), new Vector2(1400f, 96f));
+
+            TextMeshProUGUI subtitle = UiFactory.Label("Subtitle", root.transform, string.Empty, 26f,
+                UiTheme.Muted, TextAlignmentOptions.Center, TopCenter, TopCenter, TopCenter,
+                new Vector2(0f, -180f), new Vector2(1300f, 50f));
+
+            GameObject summaryBox = UiFactory.Node("SummaryBox", root.transform, Center, Center, Center,
+                new Vector2(-330f, -10f), new Vector2(600f, 340f));
+            UiFactory.Panel(summaryBox, UiTheme.Panel);
+
+            UiFactory.Label("Caption", summaryBox.transform, "THIS RUN", 18f, UiTheme.Muted,
+                TextAlignmentOptions.Center, TopLeft, TopRight, new Vector2(0.5f, 1f),
+                new Vector2(0f, -14f), new Vector2(-30f, 26f));
+
+            TextMeshProUGUI summary = UiFactory.Label("Summary", summaryBox.transform, string.Empty, 24f,
+                UiTheme.Ink, TextAlignmentOptions.TopLeft, TopLeft, TopRight, new Vector2(0.5f, 1f),
+                new Vector2(0f, -50f), new Vector2(-60f, 270f));
+
+            GameObject logBox = UiFactory.Node("LogBox", root.transform, Center, Center, Center,
+                new Vector2(330f, -10f), new Vector2(600f, 340f));
+            UiFactory.Panel(logBox, UiTheme.Panel);
+
+            UiFactory.Label("Caption", logBox.transform, "WHAT HAPPENED", 18f, UiTheme.Muted,
+                TextAlignmentOptions.Center, TopLeft, TopRight, new Vector2(0.5f, 1f),
+                new Vector2(0f, -14f), new Vector2(-30f, 26f));
+
+            TextMeshProUGUI log = UiFactory.Label("Log", logBox.transform, string.Empty, 21f,
+                UiTheme.Muted, TextAlignmentOptions.TopLeft, TopLeft, TopRight, new Vector2(0.5f, 1f),
+                new Vector2(0f, -50f), new Vector2(-60f, 270f));
+
+            Button newRun = UiFactory.Button("NewRunButton", root.transform, "New Run", UiTheme.SkillCard,
+                BottomCenter, BottomCenter, BottomCenter, new Vector2(-170f, 110f), new Vector2(300f, 80f),
+                out _, 28f);
+
+            Button menu = UiFactory.Button("MenuButton", root.transform, "Main Menu", UiTheme.PanelEdge,
+                BottomCenter, BottomCenter, BottomCenter, new Vector2(170f, 110f), new Vector2(300f, 80f),
+                out _, 28f);
+
+            screen = root.AddComponent<RunResultScreen>();
+            screen.Bind(title, subtitle, summary, log, newRun, menu);
+
+            return root;
+        }
+
+        private static CardTray BuildTray(string name, Transform parent, CardView cardPrefab,
+            Vector2 position, Vector2 size, int columns, float scale)
+        {
+            GameObject go = UiFactory.Node(name, parent, Center, Center, Center, position, size);
+
+            var tray = go.AddComponent<CardTray>();
+            tray.Bind((RectTransform)go.transform, cardPrefab, columns, scale);
+
+            return tray;
+        }
+
+        // ---------------------------------------------------------------- main menu
+
+        private static void BuildMainMenuScene()
+        {
+            Scene scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+
+            BuildCamera();
+            Canvas canvas = BuildCanvas();
+            Transform ui = canvas.transform;
+
+            UiFactory.Label("Title", ui, "LAST LIGHT", 108f, UiTheme.Light, TextAlignmentOptions.Center,
+                Center, Center, Center, new Vector2(0f, 210f), new Vector2(1400f, 150f));
+
+            UiFactory.Label("Tagline", ui,
+                "You are the last Lampwright. Hold the light for three nights.", 28f, UiTheme.Muted,
+                TextAlignmentOptions.Center, Center, Center, Center, new Vector2(0f, 110f),
+                new Vector2(1300f, 60f));
+
+            Button begin = UiFactory.Button("BeginButton", ui, "Begin the Watch", UiTheme.SkillCard,
+                Center, Center, Center, new Vector2(0f, -40f), new Vector2(380f, 88f), out _, 30f);
+
+            Button quit = UiFactory.Button("QuitButton", ui, "Quit", UiTheme.PanelEdge,
+                Center, Center, Center, new Vector2(0f, -150f), new Vector2(380f, 76f), out _, 26f);
+
+            UiFactory.Label("Hint", ui,
+                "Play cards with Focus. Ward blocks. The enemy shows its next move before it acts.",
+                21f, new Color(0.42f, 0.44f, 0.52f), TextAlignmentOptions.Center,
+                BottomCenter, BottomCenter, BottomCenter, new Vector2(0f, 60f), new Vector2(1400f, 44f));
+
+            var menuGo = new GameObject("MainMenuScreen");
+            menuGo.transform.SetParent(ui, false);
+            var menu = menuGo.AddComponent<MainMenuScreen>();
+            menu.Bind(begin, quit, "Game");
+
+            var eventSystem = new GameObject("EventSystem", typeof(EventSystem));
+            eventSystem.AddComponent<StandaloneInputModule>();
+
+            EditorSceneManager.MarkSceneDirty(scene);
+            EditorSceneManager.SaveScene(scene, MainMenuScenePath);
+        }
+
         private static void BuildDebugPanel(Transform parent, GameSession session)
         {
             GameObject root = UiFactory.Node("DebugPanel", parent, new Vector2(0f, 0.5f),
@@ -526,8 +720,10 @@ namespace LastLight.Editor.Generators
 
         private static void RegisterScenesInBuildSettings()
         {
+            // The menu must be first: index 0 is what a built player loads on launch.
             EditorBuildSettings.scenes = new[]
             {
+                new EditorBuildSettingsScene(MainMenuScenePath, true),
                 new EditorBuildSettingsScene(GameScenePath, true)
             };
         }
