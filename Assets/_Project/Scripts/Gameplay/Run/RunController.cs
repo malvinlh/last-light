@@ -157,7 +157,8 @@ namespace LastLight.Gameplay.Run
             }
 
             State.Summary.StagesCleared++;
-            State.Summary.Record($"Held off {enemyName} in {turns} turns ({State.Light} Light left).");
+            State.Summary.Record(
+                $"Held off {enemyName} in {turns} {(turns == 1 ? "turn" : "turns")} ({State.Light} Light left).");
         }
 
         // ---------------------------------------------------------------- card reward nodes
