@@ -4,6 +4,7 @@ using LastLight.Gameplay.Cards;
 using LastLight.Gameplay.Combat;
 using LastLight.Presentation;
 using LastLight.Presentation.Combat;
+using LastLight.Presentation.Common;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -211,6 +212,44 @@ namespace LastLight.Tests.PlayMode
         // What happens after the overlay - continuing to the next node, losing the run, and
         // starting over from the summary - belongs to the run flow and is covered by
         // RunLoopTests, which drives those screens rather than just this one fight.
+
+        [UnityTest]
+        public IEnumerator HoveringTheFocusBoxExplainsWhatFocusIs()
+        {
+            var tooltip = Object.FindFirstObjectByType<TooltipView>(FindObjectsInactive.Include);
+            Assert.IsNotNull(tooltip, "The scene must contain a TooltipView.");
+            Assert.IsFalse(tooltip.IsVisible, "Nothing is hovered yet.");
+
+            TooltipTrigger focus = null;
+            foreach (TooltipTrigger trigger in Object.FindObjectsByType<TooltipTrigger>(
+                         FindObjectsInactive.Include, FindObjectsSortMode.None))
+            {
+                if (trigger.name == "FocusBox") focus = trigger;
+            }
+
+            Assert.IsNotNull(focus, "The Focus box should be explainable on hover.");
+
+            focus.OnPointerEnter(null);
+            yield return null;
+
+            Assert.IsTrue(tooltip.IsVisible, "Hovering the Focus box must show the tooltip.");
+            StringAssert.Contains("Focus", tooltip.Text);
+
+            // The bug this guards: the panel opened half a screen away and fell off the canvas.
+            var canvasRect = (RectTransform)Object.FindFirstObjectByType<Canvas>().transform;
+            Rect bounds = canvasRect.rect;
+            Rect panel = tooltip.PanelRect;
+
+            Assert.GreaterOrEqual(panel.xMin, bounds.xMin, "Tooltip ran off the left edge.");
+            Assert.LessOrEqual(panel.xMax, bounds.xMax, "Tooltip ran off the right edge.");
+            Assert.GreaterOrEqual(panel.yMin, bounds.yMin, "Tooltip ran off the bottom edge.");
+            Assert.LessOrEqual(panel.yMax, bounds.yMax, "Tooltip ran off the top edge.");
+
+            focus.OnPointerExit(null);
+            yield return null;
+
+            Assert.IsFalse(tooltip.IsVisible, "Leaving the panel must dismiss the tooltip.");
+        }
 
         [UnityTest]
         public IEnumerator EveryKeyPanelHasSizeAndSitsInsideTheCanvas()

@@ -3,6 +3,7 @@
     "rootNamespace": "LastLight.Tests.EditMode",
     "references": [
         "LastLight.Gameplay",
+        "LastLight.Presentation",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
     ],
