@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5556623f0fdd43340bcba058e866b8ea, type: 3}
+  m_Name: Card_SecondWind
+  m_EditorClassIdentifier: 
+  id: second_wind
+  displayName: Second Wind
+  cardType: 1
+  cost: 1
+  upgradable: 1
+  effects:
+  - rid: 1166912030199250947
+  artwork: {fileID: 0}
+  flavorText: Breathe. Then do the rest of it.
+  references:
+    version: 2
+    RefIds:
+    - rid: 1166912030199250947
+      type: {class: GainFocusEffect, ns: LastLight.Gameplay.Effects, asm: LastLight.Gameplay}
+      data:
+        amount: 2
+        upgradedAmount: 3

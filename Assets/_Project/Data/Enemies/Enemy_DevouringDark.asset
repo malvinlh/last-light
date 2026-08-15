@@ -1,0 +1,76 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f113fad4b2cc0294981e348055e25bb8, type: 3}
+  m_Name: Enemy_DevouringDark
+  m_EditorClassIdentifier: 
+  id: devouring_dark
+  displayName: The Devouring Dark
+  description: The thing the lighthouse was built against.
+  maxLight: 55
+  pattern:
+  - label: Gather
+    intent: 2
+    effects:
+    - rid: 1166912030199250950
+  - label: Swallow
+    intent: 0
+    effects:
+    - rid: 1166912030199250951
+  - label: Swallow
+    intent: 0
+    effects:
+    - rid: 1166912030199250952
+  - label: Unmake
+    intent: 3
+    effects:
+    - rid: 1166912030199250953
+  - label: Extinguish
+    intent: 0
+    effects:
+    - rid: 1166912030199250954
+  artwork: {fileID: 0}
+  tint: {r: 0.2, g: 0.18, b: 0.28, a: 1}
+  references:
+    version: 2
+    RefIds:
+    - rid: 1166912030199250950
+      type: {class: ApplyStatusEffect, ns: LastLight.Gameplay.Effects, asm: LastLight.Gameplay}
+      data:
+        amount: 2
+        upgradedAmount: 2
+        status: 0
+        target: 0
+    - rid: 1166912030199250951
+      type: {class: DealDamageEffect, ns: LastLight.Gameplay.Effects, asm: LastLight.Gameplay}
+      data:
+        amount: 8
+        upgradedAmount: 8
+        target: 1
+    - rid: 1166912030199250952
+      type: {class: DealDamageEffect, ns: LastLight.Gameplay.Effects, asm: LastLight.Gameplay}
+      data:
+        amount: 8
+        upgradedAmount: 8
+        target: 1
+    - rid: 1166912030199250953
+      type: {class: ApplyStatusEffect, ns: LastLight.Gameplay.Effects, asm: LastLight.Gameplay}
+      data:
+        amount: 2
+        upgradedAmount: 2
+        status: 1
+        target: 1
+    - rid: 1166912030199250954
+      type: {class: DealDamageEffect, ns: LastLight.Gameplay.Effects, asm: LastLight.Gameplay}
+      data:
+        amount: 12
+        upgradedAmount: 12
+        target: 1

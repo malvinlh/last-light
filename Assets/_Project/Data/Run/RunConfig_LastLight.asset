@@ -1,0 +1,62 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6acfae73a43ec3245bfc23c7777b2f29, type: 3}
+  m_Name: RunConfig_LastLight
+  m_EditorClassIdentifier: 
+  startingLight: 50
+  combatRules:
+    handSize: 5
+    focusPerTurn: 3
+  starterDeck:
+  - card: {fileID: 11400000, guid: 3a1331fd443dfa84da3e4e029f713a96, type: 2}
+    count: 5
+  - card: {fileID: 11400000, guid: 900c4bafb2c4bc342a7d390c47b64020, type: 2}
+    count: 4
+  - card: {fileID: 11400000, guid: c4168f343b8b07244865f148debff958, type: 2}
+    count: 1
+  rewardPool:
+  - {fileID: 11400000, guid: 4d0293801680c15468356e12ab8ea1df, type: 2}
+  - {fileID: 11400000, guid: 394af7a3370b2ee42b8a3c8eeea3a3dd, type: 2}
+  - {fileID: 11400000, guid: 137ea968185aa804c928f2898c878842, type: 2}
+  - {fileID: 11400000, guid: 7d97348e70af7434d94882bfc8da2942, type: 2}
+  - {fileID: 11400000, guid: 5da11867424a349418d1efb182dcab1d, type: 2}
+  - {fileID: 11400000, guid: c87797c0428fba44abf53db29600a7ca, type: 2}
+  - {fileID: 11400000, guid: 74ec4b4cc3407c443ba0cefc4e44f239, type: 2}
+  - {fileID: 11400000, guid: 11f40621f89e68748b2be05bc864bdb1, type: 2}
+  - {fileID: 11400000, guid: 7925a67beff956346ba45e1fe42f1548, type: 2}
+  - {fileID: 11400000, guid: 017e46989d64c1c43947bdaf84c79bdc, type: 2}
+  - {fileID: 11400000, guid: 955279d5dae9b914f89447b773302792, type: 2}
+  - {fileID: 11400000, guid: f433076ca3e75024dbdb933eeddbfa85, type: 2}
+  rewardChoiceCount: 3
+  shrineMendAmount: 12
+  minimumDeckSize: 5
+  nodes:
+  - kind: 0
+    title: The First Watch
+    subtitle: Something thin is testing the light.
+    enemy: {fileID: 11400000, guid: bba3d042e04a4f44c96079b549841830, type: 2}
+  - kind: 1
+    title: Salvage
+    subtitle: Take one thing from the wreckage.
+    enemy: {fileID: 0}
+  - kind: 0
+    title: The Second Watch
+    subtitle: The ground itself has gone hungry.
+    enemy: {fileID: 11400000, guid: 46cb338f18e4f4a4eadc71a5689a30a4, type: 2}
+  - kind: 2
+    title: The Old Shrine
+    subtitle: Sharpen one thing, let go of one thing, or simply rest.
+    enemy: {fileID: 0}
+  - kind: 0
+    title: The Last Watch
+    subtitle: It has been waiting since the lighthouse was raised.
+    enemy: {fileID: 11400000, guid: ee8dd643b275dea41a686fc108d2a04c, type: 2}
