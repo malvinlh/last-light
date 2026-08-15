@@ -42,6 +42,8 @@ namespace LastLight.Presentation.Combat
 
         public ResultOverlay Overlay => resultOverlay;
 
+        public ToastView Toast => toastView;
+
         /// <summary>Wires the permanent listeners. Called once, before any combat is bound.</summary>
         public void Initialize(GameSession owner)
         {

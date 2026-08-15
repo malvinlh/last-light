@@ -131,6 +131,45 @@ namespace LastLight.Tests.PlayMode
         }
 
         [UnityTest]
+        public IEnumerator ClickingAnUnaffordableCardExplainsWhyItWasRefused()
+        {
+            CombatController combat = session.Combat;
+
+            int guard = 0;
+            while (combat.State.Focus > 0 && guard++ < 10)
+            {
+                RuntimeCard playable = FirstPlayable(combat);
+                if (playable == null) break;
+                session.TryPlayCard(playable);
+            }
+
+            yield return null;
+
+            if (combat.Deck.Hand.Count == 0 || combat.State.Outcome != CombatOutcome.InProgress)
+            {
+                Assert.Ignore("Hand emptied or combat ended before Focus ran out.");
+            }
+
+            CardView unaffordable = null;
+            foreach (CardView view in Object.FindFirstObjectByType<HandView>().GetComponentsInChildren<CardView>(false))
+            {
+                if (view.Card != null && !view.Playable) unaffordable = view;
+            }
+
+            Assert.IsNotNull(unaffordable, "Expected at least one card the player cannot afford.");
+
+            Button cardButton = unaffordable.GetComponent<Button>();
+            Assert.IsTrue(cardButton.interactable,
+                "An unaffordable card must still take the click, otherwise the refusal is never explained.");
+
+            cardButton.onClick.Invoke();
+            yield return null;
+
+            Assert.IsTrue(screen.Toast.IsVisible, "Refusing a card must tell the player why.");
+            Assert.AreEqual("Not enough Focus.", screen.Toast.Message);
+        }
+
+        [UnityTest]
         public IEnumerator EndingTheTurnLetsTheEnemyActAndDealsAFreshHand()
         {
             CombatController combat = session.Combat;

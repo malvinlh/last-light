@@ -21,6 +21,11 @@ namespace LastLight.Presentation.Common
 
         private Coroutine playing;
 
+        /// <summary>Whether a message is currently on screen. Used by tests to assert the player was told.</summary>
+        public bool IsVisible => group != null && group.alpha > 0f;
+
+        public string Message => label != null ? label.text : string.Empty;
+
         private void Awake()
         {
             if (group != null) group.alpha = 0f;

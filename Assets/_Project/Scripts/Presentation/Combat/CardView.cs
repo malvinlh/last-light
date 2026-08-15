@@ -84,9 +84,11 @@ namespace LastLight.Presentation.Combat
             if (costBadge != null) costBadge.color = playable ? accent : UiTheme.CardUnplayable;
             if (frame != null) frame.color = UiTheme.CardFace;
 
-            // Unaffordable cards stay visible and readable but obviously inert.
+            // Dimmed, but still clickable on purpose. Greying out is only a hint; the controller
+            // is what actually decides. Making the button non-interactable would swallow the
+            // click, and a card that silently does nothing teaches the player less than one that
+            // says "Not enough Focus" - which is exactly what the refusal path is there for.
             if (group != null) group.alpha = playable ? 1f : 0.55f;
-            if (button != null) button.interactable = playable;
         }
 
         public void OnPointerEnter(PointerEventData eventData)
