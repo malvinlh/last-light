@@ -50,6 +50,7 @@ namespace LastLight.Gameplay.Combat
         public event Action<CardPlayedEvent> CardPlayed;
         public event Action<PlayCardResult> CardRejected;
         public event Action<DamageEvent> Damaged;
+        public event Action<Combatant, int> Healed;
         public event Action<Combatant> CombatantChanged;
         public event Action<int> FocusChanged;
         public event Action<EnemyAction> IntentChanged;
@@ -220,7 +221,11 @@ namespace LastLight.Gameplay.Combat
         {
             if (target == null || amount <= 0) return;
 
-            target.Heal(amount);
+            // Report what was actually restored, not what was asked for, so a heal at full
+            // Light shows nothing rather than a misleading number.
+            int restored = target.Heal(amount);
+            if (restored > 0) Healed?.Invoke(target, restored);
+
             CombatantChanged?.Invoke(target);
         }
 
@@ -315,5 +320,19 @@ namespace LastLight.Gameplay.Combat
             State.Focus = clamped;
             FocusChanged?.Invoke(clamped);
         }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        /// <summary>
+        /// Development-only shortcut used by the in-game debug panel to jump straight to a
+        /// result. Compiled out of release builds so it cannot be reached in the submission,
+        /// and kept to a single method so the shortcut is obvious rather than hidden among the
+        /// real rules.
+        /// </summary>
+        public void DebugEndCombat(CombatOutcome outcome)
+        {
+            if (State.Outcome != CombatOutcome.InProgress || outcome == CombatOutcome.InProgress) return;
+            EndCombat(outcome);
+        }
+#endif
     }
 }
