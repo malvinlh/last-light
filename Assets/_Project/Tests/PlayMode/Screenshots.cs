@@ -58,6 +58,19 @@ namespace LastLight.Tests.PlayMode
 
             yield return Capture("02-combat");
 
+            // A frame with a tooltip open, so its placement can be checked by eye.
+            var tooltip = Object.FindFirstObjectByType<Presentation.Common.TooltipView>(
+                FindObjectsInactive.Include);
+            if (tooltip != null)
+            {
+                tooltip.ShowAt("Ward absorbs incoming damage. It is spent as it blocks, and whatever " +
+                               "is left expires at the start of your next turn.", new Vector2(-620f, 380f));
+                yield return null;
+                yield return Capture("02b-tooltip");
+                tooltip.Hide();
+                yield return null;
+            }
+
             // Play a card and take a hit so the shot shows a fight in progress.
             foreach (var card in new System.Collections.Generic.List<Gameplay.Cards.RuntimeCard>(
                          session.Combat.Deck.Hand))
