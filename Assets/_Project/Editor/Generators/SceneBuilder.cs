@@ -27,6 +27,14 @@ namespace LastLight.Editor.Generators
     /// The generated scene is a committed asset and the source of truth once built. Re-running
     /// this replaces it wholesale, so hand edits made in the Editor will be lost - which is the
     /// trade being made for repeatability.
+    ///
+    /// Known limitation: this is NOT idempotent, unlike the data generator. The scene is rebuilt
+    /// from an empty scene each time, so Unity assigns fresh local file ids to every object and
+    /// even a no-op rebuild rewrites the whole file (~2,700 changed lines of pure id churn).
+    /// Stabilising those ids is not something the API meaningfully allows, so instead this is
+    /// kept off the routine path: it is its own menu item, separate from data generation, and is
+    /// only meant to be run when the layout actually changes - at which point a large diff is
+    /// honest anyway. Do not run it just to check whether it still works.
     /// </remarks>
     public static class SceneBuilder
     {
