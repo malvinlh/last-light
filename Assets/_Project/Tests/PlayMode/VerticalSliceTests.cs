@@ -189,14 +189,14 @@ namespace LastLight.Tests.PlayMode
         }
 
         [UnityTest]
-        public IEnumerator WinningShowsTheResultOverlayAndStopsAcceptingInput()
+        public IEnumerator ClearingTheStageRaisesTheOverlayAndStopsAcceptingInput()
         {
             CombatController combat = session.Combat;
             combat.DebugEndCombat(CombatOutcome.Victory);
             yield return null;
 
             Assert.AreEqual(CombatOutcome.Victory, combat.State.Outcome);
-            Assert.IsTrue(screen.Overlay.IsVisible, "The result overlay should be on screen.");
+            Assert.IsTrue(screen.Overlay.IsVisible, "Clearing a stage should show the overlay.");
             Assert.IsFalse(combat.State.IsPlayerInputAllowed);
 
             RuntimeCard anyCard = combat.Deck.Hand.Count > 0 ? combat.Deck.Hand[0] : null;
@@ -208,38 +208,9 @@ namespace LastLight.Tests.PlayMode
             }
         }
 
-        [UnityTest]
-        public IEnumerator LosingShowsTheResultOverlay()
-        {
-            session.Combat.DebugEndCombat(CombatOutcome.Defeat);
-            yield return null;
-
-            Assert.AreEqual(CombatOutcome.Defeat, session.Combat.State.Outcome);
-            Assert.IsTrue(screen.Overlay.IsVisible);
-        }
-
-        [UnityTest]
-        public IEnumerator TheOverlayButtonActuallyStartsAFreshRun()
-        {
-            CombatController finished = session.Combat;
-            finished.DebugEndCombat(CombatOutcome.Defeat);
-            yield return null;
-
-            // Click the real button rather than calling the handler, so the wiring is covered.
-            Button action = screen.Overlay.GetComponentInChildren<Button>(true);
-            Assert.IsNotNull(action, "The overlay must have an action button.");
-
-            action.onClick.Invoke();
-            yield return null;
-
-            Assert.AreNotSame(finished, session.Combat, "A new combat should have been built.");
-            Assert.AreEqual(CombatOutcome.InProgress, session.Combat.State.Outcome);
-            Assert.AreEqual(1, session.Combat.State.TurnNumber);
-            Assert.AreEqual(50, session.Combat.State.Player.Light, "Light is restored for a new run.");
-            Assert.AreEqual(10, session.Combat.Deck.TotalCards, "The deck is back to the starter list.");
-            Assert.AreEqual(0, session.Run.State.NodeIndex);
-            Assert.IsFalse(screen.Overlay.IsVisible, "The overlay should be dismissed.");
-        }
+        // What happens after the overlay - continuing to the next node, losing the run, and
+        // starting over from the summary - belongs to the run flow and is covered by
+        // RunLoopTests, which drives those screens rather than just this one fight.
 
         [UnityTest]
         public IEnumerator EveryKeyPanelHasSizeAndSitsInsideTheCanvas()
