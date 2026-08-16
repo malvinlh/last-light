@@ -59,14 +59,17 @@ namespace LastLight.Presentation.Run
 
             if (summaryLabel != null)
             {
+                // Values are aligned with a TMP position tag rather than padded with spaces. The
+                // face is proportional, so runs of spaces do not form a column and the numbers
+                // come out ragged.
                 var builder = new StringBuilder();
-                builder.AppendLine($"Stages cleared    {summary.StagesCleared} / {CombatStages(totalStages)}");
-                builder.AppendLine($"Turns taken       {summary.TurnsTaken}");
-                builder.AppendLine($"Light remaining   {state.Light} / {state.MaxLight}");
-                builder.AppendLine($"Cards drafted     {summary.CardsAdded}");
-                builder.AppendLine($"Cards sharpened   {summary.CardsUpgraded}");
-                builder.AppendLine($"Cards released    {summary.CardsRemoved}");
-                builder.Append($"Final deck        {state.Deck.Count} cards");
+                Row(builder, "Stages cleared", $"{summary.StagesCleared} / {CombatStages(totalStages)}");
+                Row(builder, "Turns taken", summary.TurnsTaken.ToString());
+                Row(builder, "Light remaining", $"{state.Light} / {state.MaxLight}");
+                Row(builder, "Cards drafted", summary.CardsAdded.ToString());
+                Row(builder, "Cards sharpened", summary.CardsUpgraded.ToString());
+                Row(builder, "Cards released", summary.CardsRemoved.ToString());
+                Row(builder, "Final deck", $"{state.Deck.Count} cards", last: true);
 
                 summaryLabel.text = builder.ToString();
             }
@@ -74,9 +77,20 @@ namespace LastLight.Presentation.Run
             if (logLabel != null)
             {
                 var builder = new StringBuilder();
-                for (int i = 0; i < summary.Log.Count; i++) builder.AppendLine(summary.Log[i]);
+                for (int i = 0; i < summary.Log.Count; i++)
+                {
+                    builder.AppendLine($"<indent=14>· {summary.Log[i]}</indent>");
+                }
+
                 logLabel.text = builder.ToString();
             }
+        }
+
+        /// <summary>One label/value row, with the value starting at a fixed column.</summary>
+        private static void Row(StringBuilder builder, string label, string value, bool last = false)
+        {
+            builder.Append($"<color=#9aa0ad>{label}</color><pos=64%>{value}");
+            if (!last) builder.AppendLine();
         }
 
         /// <summary>The summary counts fights, not decision nodes, so the denominator has to match.</summary>
