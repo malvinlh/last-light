@@ -24,8 +24,8 @@ not inferred from a passing test.
 | M12 | Start a new run after finishing | Yes | Yes | Yes | **New Run** on the summary; `NewRunFromTheSummaryResetsEverything` |
 | M13 | Full project source in the repo | Yes | n/a | n/a | `Assets/`, `Packages/`, `ProjectSettings/` all tracked |
 | M14 | Root `README.md` in the brief's structure | Yes | n/a | n/a | Five required sections, in order |
-| M15 | Build in `/Build/` or an external link | Yes (both) | n/a | Yes | `/Build/LastLight/` committed; 35 MB mirror zip prepared |
-| M16 | Meaningful commit history | Yes | n/a | n/a | ~45 commits across five milestones, no squashing |
+| M15 | Build in `/Build/` or an external link | Yes (both) | n/a | Yes | `/Build/LastLight/` committed; 36 MB mirror zip prepared |
+| M16 | Meaningful commit history | Yes | n/a | n/a | 60+ commits across five milestones, no squashing |
 | M17 | All gameplay code is my own | Yes | n/a | n/a | Only third-party content is CC0 art; see `ATTRIBUTION.md` |
 | M18 | No paid or inaccessible dependencies | Yes | n/a | n/a | `Packages/manifest.json` is Unity packages only |
 | M19 | No high-level gameplay framework | Yes | n/a | n/a | FSM, deck, effect system all hand-written |
