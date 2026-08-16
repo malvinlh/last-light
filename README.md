@@ -186,7 +186,7 @@ Cards and enemies are authored once in a C# catalog
 (`Assets/_Project/Editor/Generators/CardCatalog.cs`) and generated into ScriptableObject assets. The
 scenes and the card prefab are built by `SceneBuilder`. Three reasons: the whole card set is
 reviewable in one diff, a balance pass is a single file edit, and wiring dozens of serialized
-references by hand is the most error prone part of this workflow. Views expose an editor only
+references by hand is the most error prone part of this project. Views expose an editor only
 `Bind()` so the generator assigns references through a compiler checked call rather than by name.
 
 Data generation is **idempotent**: assets whose content already matches are left untouched. That
@@ -230,9 +230,9 @@ repository.
 - **`ProjectValidator`** (`Assets/_Project/Editor/Validation/ProjectValidator.cs`): editor version,
   build settings, duplicate card ids, cards with no effects, combat nodes with no enemy, missing
   scene components. The class of bug that survives a green test run.
-- **A screenshot fixture** that renders every screen to a PNG. Two purely visual bugs,
-  a health bar rendering as a lens and a display
-  font whose `7` reads as a bracket, passed the entire test suite and were caught only by looking.
+- **A screenshot fixture** that renders every screen to a PNG. Two purely visual bugs, a health bar
+  rendering as a lens and a display font whose `7` reads as a bracket, passed the entire test suite
+  and were caught only by looking at the images.
 
 ### What I deliberately did not build
 

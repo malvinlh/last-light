@@ -18,10 +18,10 @@ namespace LastLight.Tests.PlayMode
     /// Run with:
     ///   Unity -batchmode -runTests -testPlatform PlayMode -testFilter "Screenshots"
     ///
-    /// Two reasons this exists. Development here is headless, so without it the only way to know
-    /// what the game looks like is to ask someone to open the editor - and a bug that is only
-    /// visible (a bar rendering as a smear, an actor the size of a speck) survives a fully green
-    /// test suite. It also produces the images for the README.
+    /// Two reasons this exists. A bug that is only visible (a bar rendering as a smear, an actor
+    /// the size of a speck) survives a fully green test suite, so the images are the only check
+    /// that catches it. It also produces the screenshots for the README, which then cannot drift
+    /// out of date without the fixture being re-run.
     ///
     /// ScreenCapture does not work in batch mode: there is no swap chain to read back from, so it
     /// silently writes nothing. Rendering the camera into a RenderTexture does work, but overlay

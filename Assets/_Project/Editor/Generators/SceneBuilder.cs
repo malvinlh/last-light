@@ -23,7 +23,7 @@ namespace LastLight.Editor.Generators
     /// The scene is generated rather than hand-authored for the same reason the card assets
     /// are: it is reviewable as a diff, it can be rebuilt exactly if it breaks, and wiring
     /// dozens of serialized references by hand is the single most error-prone part of this
-    /// workflow. Views expose an editor-only Bind() so the generator assigns references through
+    /// project. Views expose an editor-only Bind() so the generator assigns references through
     /// a compiler-checked call instead of by string name.
     ///
     /// The generated scene is a committed asset and the source of truth once built. Re-running
@@ -36,7 +36,7 @@ namespace LastLight.Editor.Generators
     /// Stabilising those ids is not something the API meaningfully allows, so instead this is
     /// kept off the routine path: it is its own menu item, separate from data generation, and is
     /// only meant to be run when the layout actually changes - at which point a large diff is
-    /// honest anyway. Do not run it just to check whether it still works.
+    /// honest anyway. Running it as a smoke test is not worth the churn it costs.
     /// </remarks>
     public static class SceneBuilder
     {
