@@ -38,7 +38,7 @@ Drafted one of three after a victory.
 
 Patterns loop, and the next action is always telegraphed a turn ahead.
 
-### The Devouring Dark — 55 Light
+### The Devouring Dark (55 Light)
 
 *The thing the lighthouse was built against.*
 
@@ -50,7 +50,7 @@ Patterns loop, and the next action is always telegraphed a turn ahead.
 | 4 | Debuff | Unmake | Apply 2 Exposed. |
 | 5 | Attack | Extinguish | Deal 12 damage. |
 
-### Fledgling Shade — 22 Light
+### Fledgling Shade (22 Light)
 
 *A thin, hungry thing. It has not learned patience yet.*
 
@@ -60,7 +60,7 @@ Patterns loop, and the next action is always telegraphed a turn ahead.
 | 2 | Attack | Lunge | Deal 7 damage. |
 | 3 | Defend | Coil | Gain 6 Ward. |
 
-### Grasping Mire — 32 Light
+### Grasping Mire (32 Light)
 
 *It does not chase. It waits for the light to come to it.*
 

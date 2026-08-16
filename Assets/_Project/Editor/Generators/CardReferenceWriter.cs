@@ -124,7 +124,7 @@ namespace LastLight.Editor.Generators
 
             foreach (EnemyDefinition enemy in enemies)
             {
-                doc.AppendLine($"### {enemy.DisplayName} — {enemy.MaxLight} Light");
+                doc.AppendLine($"### {enemy.DisplayName} ({enemy.MaxLight} Light)");
                 doc.AppendLine();
                 if (!string.IsNullOrWhiteSpace(enemy.Description)) doc.AppendLine($"*{enemy.Description}*");
                 doc.AppendLine();
