@@ -1,8 +1,18 @@
 # Architecture
 
-Diagrams are Mermaid, which GitHub renders inline — no image files to fall out of date.
+Each diagram appears twice: as a PNG, and as the Mermaid source that is easier to edit. The PNGs
+are what the README embeds, because plenty of markdown viewers do not render Mermaid. Both are
+generated, the images by `Tools/diagrams/generate_diagrams.py`:
+
+```
+py -3.13 -m venv Doc/.venv
+Doc/.venv/Scripts/python -m pip install -r Tools/diagrams/requirements.txt
+Doc/.venv/Scripts/python Tools/diagrams/generate_diagrams.py
+```
 
 ## Layers
+
+![01-layers](diagrams/01-layers.png)
 
 The one-way dependency is enforced by assembly definitions, not convention. The gameplay assembly
 cannot reference the presentation assembly even by accident, which is what keeps the rules testable
@@ -51,6 +61,8 @@ flowchart TD
 
 ## Card definition to resolution
 
+![02-card-flow](diagrams/02-card-flow.png)
+
 The path a card takes from authored data to an applied effect. Note that the definition asset is
 only ever read.
 
@@ -71,6 +83,8 @@ The dotted path is why printed text cannot drift from behaviour: both come from 
 
 ## Turn flow
 
+![03-turn-machine](diagrams/03-turn-machine.png)
+
 `PlayerAction` is the only phase in which a card can be played. Every other phase passes through in
 a single synchronous step.
 
@@ -90,10 +104,12 @@ stateDiagram-v2
     CombatEnd --> [*]
 ```
 
-A card that kills the enemy mid-turn ends the combat immediately — `TryPlayCard` re-checks the
+A card that kills the enemy mid-turn ends the combat immediately: `TryPlayCard` re-checks the
 outcome after resolving, so the phase moves to `CombatEnd` without waiting for the turn to end.
 
 ## Deck lifecycle
+
+![04-deck-lifecycle](diagrams/04-deck-lifecycle.png)
 
 ```mermaid
 flowchart LR
@@ -109,6 +125,8 @@ A played card leaves the hand *before* it resolves and enters the discard *after
 draws cards can never redraw itself mid-resolution.
 
 ## Run flow
+
+![05-run-flow](diagrams/05-run-flow.png)
 
 ```mermaid
 flowchart TD
@@ -148,7 +166,7 @@ Winning is *running off the end of the node list* rather than a flag set by the 
 | Light, run deck, node cursor, summary | `RunState` | one run |
 | Draw / hand / discard | `DeckService` | one combat |
 | Phase, turn, Focus, Ward, statuses | `CombatState` | one combat |
-| Anything on screen | views | one frame — always re-read |
+| Anything on screen | views | one frame: always re-read |
 
 The rule that keeps this honest: **the run owns the truth and combat borrows it.** A combat is built
 over the run's card list and copies Light back at exactly one point, when it ends.
