@@ -52,6 +52,8 @@ namespace LastLight.Editor.Generators
         public const string ActorSpritePath = GeneratedArtFolder + "/Actor_Disc.png";
         public const string HaloSpritePath = GeneratedArtFolder + "/Actor_Halo.png";
         public const string RunConfigPath = "Assets/_Project/Data/Run/RunConfig_LastLight.asset";
+        public const string MenuTrackPath = "Assets/_Project/Audio/menu_theme.wav";
+        public const string CombatTrackPath = "Assets/_Project/Audio/combat_theme.wav";
 
         private static readonly Vector2 Center = new Vector2(0.5f, 0.5f);
         private static readonly Vector2 TopLeft = new Vector2(0f, 1f);
@@ -240,6 +242,8 @@ namespace LastLight.Editor.Generators
             // Built early so the panels could be given a reference, but it has to draw last.
             tooltip.transform.SetAsLastSibling();
 
+            BuildMusic(CombatTrackPath, volume: 0.38f);
+
             var eventSystem = new GameObject("EventSystem", typeof(EventSystem));
             // The project runs with both input backends enabled, so the classic module works
             // and avoids a hard dependency on the Input System package from this assembly.
@@ -247,6 +251,26 @@ namespace LastLight.Editor.Generators
 
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene, GameScenePath);
+        }
+
+        /// <summary>
+        /// Adds the scene's looping track. One per scene rather than a persistent object, because
+        /// the menu and the run deliberately sound different and there is only one transition.
+        /// </summary>
+        private static void BuildMusic(string clipPath, float volume)
+        {
+            var clip = AssetDatabase.LoadAssetAtPath<AudioClip>(clipPath);
+            if (clip == null)
+            {
+                Debug.LogWarning($"[LastLight] No music at {clipPath}; the scene will be silent.");
+                return;
+            }
+
+            var go = new GameObject("Music");
+            var source = go.AddComponent<AudioSource>();
+            source.playOnAwake = false;
+
+            go.AddComponent<MusicPlayer>().Bind(source, clip, volume);
         }
 
         private static void BuildCamera()
@@ -764,8 +788,12 @@ namespace LastLight.Editor.Generators
             Button begin = UiFactory.Button("BeginButton", ui, "Begin the Watch", UiTheme.SkillCard,
                 Center, Center, Center, new Vector2(0f, -40f), new Vector2(380f, 88f), out _, 30f);
 
+            Button music = UiFactory.Button("MusicButton", ui, "Music: On", UiTheme.PanelEdge,
+                Center, Center, Center, new Vector2(0f, -142f), new Vector2(380f, 70f),
+                out TextMeshProUGUI musicLabel, 24f);
+
             Button quit = UiFactory.Button("QuitButton", ui, "Quit", UiTheme.PanelEdge,
-                Center, Center, Center, new Vector2(0f, -150f), new Vector2(380f, 76f), out _, 26f);
+                Center, Center, Center, new Vector2(0f, -234f), new Vector2(380f, 70f), out _, 24f);
 
             UiFactory.Label("Hint", ui,
                 "Play cards with Focus. Ward blocks. The enemy shows its next move before it acts.",
@@ -775,7 +803,9 @@ namespace LastLight.Editor.Generators
             var menuGo = new GameObject("MainMenuScreen");
             menuGo.transform.SetParent(ui, false);
             var menu = menuGo.AddComponent<MainMenuScreen>();
-            menu.Bind(begin, quit, "Game");
+            menu.Bind(begin, music, musicLabel, quit, "Game");
+
+            BuildMusic(MenuTrackPath, volume: 0.45f);
 
             var eventSystem = new GameObject("EventSystem", typeof(EventSystem));
             eventSystem.AddComponent<StandaloneInputModule>();
