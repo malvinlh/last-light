@@ -82,6 +82,58 @@ namespace LastLight.Tests.EditMode
         }
 
         [Test]
+        public void UnplayedCardsAreDiscardedAtEndOfTurnAndComeBackLater()
+        {
+            // This is the rule players trip over: cards left in hand when the turn ends look like
+            // they vanish. They go to the discard pile and return on the next reshuffle. Nothing
+            // is destroyed, and this test exists to say so by name.
+            CombatController combat = data.Combat(data.PassiveEnemy(), data.Copies(strike, 10), handSize: 5);
+            combat.StartCombat();
+
+            var leftInHand = new List<RuntimeCard>(combat.Deck.Hand);
+            Assert.AreEqual(5, leftInHand.Count, "Precondition: a full hand, none of it played.");
+
+            combat.EndPlayerTurn();
+
+            foreach (RuntimeCard card in leftInHand)
+            {
+                CollectionAssert.Contains(combat.Deck.DiscardPile, card,
+                    "An unplayed card must go to the discard pile, not out of the deck.");
+            }
+
+            Assert.AreEqual(10, combat.Deck.TotalCards, "The deck still holds every card it started with.");
+
+            // Dealing turn two drained the draw pile, so turn three cannot be dealt without
+            // recycling the discard. That reshuffle is the moment the cards come back, and it
+            // happens inside the next EndPlayerTurn rather than after it.
+            Assert.AreEqual(0, combat.Deck.DrawPile.Count, "Precondition: the draw pile should be spent.");
+
+            combat.EndPlayerTurn();
+
+            Assert.AreEqual(5, combat.Deck.Hand.Count, "A reshuffle must still deal a full hand.");
+            Assert.AreEqual(10, combat.Deck.TotalCards);
+
+            int recovered = 0;
+            foreach (RuntimeCard card in leftInHand)
+            {
+                if (Holds(combat.Deck.Hand, card) || Holds(combat.Deck.DrawPile, card)) recovered++;
+            }
+
+            Assert.AreEqual(leftInHand.Count, recovered,
+                "Every discarded card should be back in circulation after the reshuffle.");
+        }
+
+        private static bool Holds(IReadOnlyList<RuntimeCard> pile, RuntimeCard card)
+        {
+            for (int i = 0; i < pile.Count; i++)
+            {
+                if (ReferenceEquals(pile[i], card)) return true;
+            }
+
+            return false;
+        }
+
+        [Test]
         public void EndingTheTurn_DiscardsTheHandAndDealsAFreshOne()
         {
             CombatController combat = data.Combat(data.PassiveEnemy(), data.Copies(strike, 12), handSize: 5);
