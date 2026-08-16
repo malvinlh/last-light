@@ -71,16 +71,17 @@ namespace LastLight.Tests.PlayMode
                 yield return null;
             }
 
-            // Play a card and take a hit so the shot shows a fight in progress.
-            foreach (var card in new System.Collections.Generic.List<Gameplay.Cards.RuntimeCard>(
-                         session.Combat.Deck.Hand))
+            // Play three real turns so the shot shows a fight in progress rather than an opening
+            // hand: Light spent, Ward up, piles moved, the enemy visibly damaged.
+            for (int turn = 0; turn < 3; turn++)
             {
-                if (session.TryPlayCard(card).Success) break;
+                PlayWholeTurn(session);
+                if (session.Combat.State.Outcome != CombatOutcome.InProgress) break;
+                session.EndTurn();
+                yield return null;
             }
 
-            session.EndTurn();
-            yield return null;
-            yield return Capture("03-combat-turn-two");
+            yield return Capture("03-combat-in-progress");
 
             // --- draft -----------------------------------------------------
             session.Combat.DebugEndCombat(CombatOutcome.Victory);
@@ -91,11 +92,13 @@ namespace LastLight.Tests.PlayMode
             yield return null;
             yield return Capture("05-card-reward");
 
-            // --- shrine ----------------------------------------------------
+            // Actually take a card, so the deck and the summary reflect a real decision.
             var reward = Object.FindFirstObjectByType<Presentation.Run.RewardScreen>(FindObjectsInactive.Include);
-            Click(reward, "SkipButton");
+            ClickFirstCard(reward);
             yield return null;
 
+            // --- shrine ----------------------------------------------------
+            PlayWholeTurn(session);
             session.Combat.DebugEndCombat(CombatOutcome.Victory);
             yield return null;
             Click(screen.Overlay, "ActionButton");
@@ -107,15 +110,26 @@ namespace LastLight.Tests.PlayMode
             yield return null;
             yield return Capture("07-shrine-choosing");
 
-            Click(shrine, "LeaveButton");
+            // Sharpen one, so the summary shows a non-zero count and the deck holds a "+" card.
+            ClickFirstCard(shrine);
             yield return null;
 
-            // --- run summary -----------------------------------------------
+            // --- victory summary ---------------------------------------------
+            PlayWholeTurn(session);
             session.Combat.DebugEndCombat(CombatOutcome.Victory);
             yield return null;
             Click(screen.Overlay, "ActionButton");
             yield return null;
-            yield return Capture("08-run-summary");
+            yield return Capture("08-run-summary-victory");
+
+            // --- defeat summary ----------------------------------------------
+            Click(Object.FindFirstObjectByType<Presentation.Run.RunResultScreen>(FindObjectsInactive.Include),
+                "NewRunButton");
+            yield return null;
+
+            session.Combat.DebugEndCombat(CombatOutcome.Defeat);
+            yield return null;
+            yield return Capture("09-run-summary-defeat");
 
             Debug.Log($"[Screenshots] written to {OutputFolder}");
         }
@@ -154,6 +168,41 @@ namespace LastLight.Tests.PlayMode
 
             canvas.renderMode = originalMode;
             yield return null;
+        }
+
+        /// <summary>Plays cards until Focus runs out, the way a player spends a turn.</summary>
+        private static void PlayWholeTurn(GameSession session)
+        {
+            int guard = 0;
+
+            while (guard++ < 12 && session.Combat != null &&
+                   session.Combat.State.Outcome == CombatOutcome.InProgress)
+            {
+                bool played = false;
+
+                foreach (var card in new System.Collections.Generic.List<Gameplay.Cards.RuntimeCard>(
+                             session.Combat.Deck.Hand))
+                {
+                    if (!session.TryPlayCard(card).Success) continue;
+                    played = true;
+                    break;
+                }
+
+                if (!played) return;
+            }
+        }
+
+        private static void ClickFirstCard(Component screen)
+        {
+            if (screen == null) return;
+
+            foreach (Presentation.Combat.CardView view in
+                     screen.GetComponentsInChildren<Presentation.Combat.CardView>(false))
+            {
+                if (view.Card == null || !view.Playable) continue;
+                view.GetComponent<Button>().onClick.Invoke();
+                return;
+            }
         }
 
         private static void Click(Component root, string buttonName)
