@@ -279,6 +279,11 @@ Roughly in the order I would pick them up:
   only the hit flash and the floating damage number animate.
 - **The hand overlaps rather than fans** once it holds more than about seven cards. Readable, but the
   tighter spacing is a compromise rather than a design.
+- **Discarding your hand at the end of a turn surprises people.** It is standard for the genre and
+  the cards are not lost, they go to the discard pile and return on the next reshuffle, but a first
+  time player reads it as their cards vanishing. It is now stated on the End Turn button and in its
+  tooltip, which is a label rather than a real solution; the genuine fix is a short animation of the
+  hand moving to the discard pile, which belongs with the turn sequencing work above.
 - **Balance is lightly tuned.** I played the run enough to know it is winnable and losable, not enough
   to call the curve good. The Devouring Dark ramps itself with Kindled, so a slow start against it can
   spiral.
