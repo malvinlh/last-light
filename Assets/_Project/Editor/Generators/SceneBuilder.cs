@@ -205,8 +205,19 @@ namespace LastLight.Editor.Generators
             HandView handView = BuildHandTray(combat, cardPrefab);
 
             Button endTurn = UiFactory.Button("EndTurnButton", combat, "End Turn", UiTheme.SkillCard,
-                BottomRight, BottomRight, BottomRight, new Vector2(-48f, 336f), new Vector2(240f, 84f),
+                BottomRight, BottomRight, BottomRight, new Vector2(-48f, 348f), new Vector2(240f, 84f),
                 out _, 28f);
+
+            UiFactory.Tooltip(endTurn.gameObject, tooltip,
+                "Ends your turn. Any cards still in your hand are discarded, you draw a fresh five, " +
+                "and unspent Focus is lost. Discarded cards are not gone: they come back when the " +
+                "draw pile runs out and the discard is shuffled back in.");
+
+            // Stated permanently as well as on hover. Discarding the hand is standard for the genre
+            // but surprising on first contact, and a reviewer who never hovers should still learn it.
+            UiFactory.Label("EndTurnHint", combat, "unplayed cards are discarded", 15f, UiTheme.Muted,
+                TextAlignmentOptions.Center, BottomRight, BottomRight, BottomRight,
+                new Vector2(-48f, 318f), new Vector2(240f, 24f));
 
             ToastView toast = BuildToast(combat);
             ResultOverlay overlay = BuildResultOverlay(combat);
@@ -495,8 +506,15 @@ namespace LastLight.Editor.Generators
                 TextAlignmentOptions.Left, TopLeft, TopRight, new Vector2(0.5f, 1f),
                 new Vector2(0f, -12f), new Vector2(-36f, 32f));
 
+            // The bar stops short of the right edge and the number lives in the gap. Sitting the
+            // number ON the bar cannot be made readable by choosing a colour: it spans both the
+            // amber fill and the dark track, so whichever colour is picked fails at some health
+            // level, and at mid health it straddles the boundary.
+            const float readoutWidth = 104f;
+
             GameObject barBg = UiFactory.Node("LightBar", panel.transform, TopLeft, TopRight,
-                new Vector2(0.5f, 1f), new Vector2(0f, -50f), new Vector2(-36f, 28f));
+                new Vector2(0.5f, 1f), new Vector2(-readoutWidth * 0.5f, -50f),
+                new Vector2(-36f - readoutWidth, 28f));
             UiFactory.Inset(barBg, new Color(0.05f, 0.05f, 0.08f, 1f));
 
             // The fill lives inside a padded frame and is resized by its anchors, not fillAmount.
@@ -506,11 +524,14 @@ namespace LastLight.Editor.Generators
             Image fill = UiFactory.Solid(fillGo, UiTheme.Light);
             fill.raycastTarget = false;
 
-            TextMeshProUGUI lightLabel = UiFactory.LabelIn("LightLabel", barBg.transform, "0 / 0", 17f,
-                UiTheme.Ink, TextAlignmentOptions.Center);
+            TextMeshProUGUI lightLabel = UiFactory.Label("LightLabel", panel.transform, "0 / 0", 19f,
+                UiTheme.Ink, TextAlignmentOptions.Right, TopRight, TopRight, TopRight,
+                new Vector2(-18f, -50f), new Vector2(readoutWidth - 8f, 28f));
 
-            UiFactory.Tooltip(barBg, tooltip,
-                "Light is your health. It carries from one stage to the next - the run ends when it reaches zero.");
+            const string lightTip =
+                "Light is your health. It carries from one stage to the next - the run ends when it reaches zero.";
+            UiFactory.Tooltip(barBg, tooltip, lightTip);
+            UiFactory.Tooltip(lightLabel.gameObject, tooltip, lightTip);
 
             TextMeshProUGUI wardLabel = UiFactory.Label("WardLabel", panel.transform, "Ward 0", 19f,
                 UiTheme.Ward, TextAlignmentOptions.Left, TopLeft, TopLeft, TopLeft,
@@ -719,28 +740,30 @@ namespace LastLight.Editor.Generators
                 new Vector2(0f, -180f), new Vector2(1300f, 50f));
 
             GameObject summaryBox = UiFactory.Node("SummaryBox", root.transform, Center, Center, Center,
-                new Vector2(-330f, -10f), new Vector2(600f, 340f));
+                new Vector2(-320f, -6f), new Vector2(580f, 302f));
             UiFactory.Panel(summaryBox, UiTheme.Panel);
 
             UiFactory.Label("Caption", summaryBox.transform, "THIS RUN", 18f, UiTheme.Muted,
                 TextAlignmentOptions.Center, TopLeft, TopRight, new Vector2(0.5f, 1f),
                 new Vector2(0f, -14f), new Vector2(-30f, 26f));
 
-            TextMeshProUGUI summary = UiFactory.Label("Summary", summaryBox.transform, string.Empty, 24f,
+            TextMeshProUGUI summary = UiFactory.Label("Summary", summaryBox.transform, string.Empty, 23f,
                 UiTheme.Ink, TextAlignmentOptions.TopLeft, TopLeft, TopRight, new Vector2(0.5f, 1f),
-                new Vector2(0f, -50f), new Vector2(-60f, 270f));
+                new Vector2(0f, -48f), new Vector2(-64f, 240f));
+            summary.lineSpacing = 26f;
 
             GameObject logBox = UiFactory.Node("LogBox", root.transform, Center, Center, Center,
-                new Vector2(330f, -10f), new Vector2(600f, 340f));
+                new Vector2(320f, -6f), new Vector2(580f, 302f));
             UiFactory.Panel(logBox, UiTheme.Panel);
 
             UiFactory.Label("Caption", logBox.transform, "WHAT HAPPENED", 18f, UiTheme.Muted,
                 TextAlignmentOptions.Center, TopLeft, TopRight, new Vector2(0.5f, 1f),
                 new Vector2(0f, -14f), new Vector2(-30f, 26f));
 
-            TextMeshProUGUI log = UiFactory.Label("Log", logBox.transform, string.Empty, 21f,
+            TextMeshProUGUI log = UiFactory.Label("Log", logBox.transform, string.Empty, 20f,
                 UiTheme.Muted, TextAlignmentOptions.TopLeft, TopLeft, TopRight, new Vector2(0.5f, 1f),
-                new Vector2(0f, -50f), new Vector2(-60f, 270f));
+                new Vector2(0f, -48f), new Vector2(-64f, 240f));
+            log.lineSpacing = 20f;
 
             Button newRun = UiFactory.Button("NewRunButton", root.transform, "New Run", UiTheme.SkillCard,
                 BottomCenter, BottomCenter, BottomCenter, new Vector2(-170f, 110f), new Vector2(300f, 80f),
