@@ -1,7 +1,7 @@
 # QA checklist
 
 The manual pass for the built executable. Automated coverage is listed alongside each item so it is
-clear what is *proven* versus what is *observed by hand* — a green test suite does not prove the
+clear what is *proven* versus what is *observed by hand*: a green test suite does not prove the
 build launches, and launching does not prove the rules are right.
 
 **Legend:** ✅ covered by an automated test · 👁 must be seen by a human · ⚙ checked by
@@ -24,8 +24,13 @@ build launches, and launching does not prove the rules are right.
 | 7 | Player log reports engine `6000.0.75f1` | ✅ `Initialize engine version: 6000.0.75f1` |
 | 8 | Opens on the main menu, windowed, resizable | 👁 |
 | 9 | **Quit** closes the game | 👁 |
+| 9a | Menu music plays on the title screen | 👁 |
+| 9b | **Music: On/Off** silences it and the label updates | 👁 |
+| 9c | The preference survives restarting the game | 👁 |
+| 9d | A different, denser track plays in the run | 👁 |
+| 9e | Neither track clicks at the loop point (wait ~60 s) | 👁 |
 
-## Combat — stage one
+## Combat: stage one
 
 | # | Check | Status |
 |---|---|---|
@@ -90,7 +95,7 @@ One pass through the built `.exe`, in order. This is the sequence to run before 
 2. Note the enemy's intent number, end the turn without playing, confirm you lose exactly that much
    Light
 3. Spend all Focus, click a greyed card, confirm the refusal message
-4. Hover Ward, Focus and the intent badge — confirm each explains itself and stays on screen
+4. Hover Ward, Focus and the intent badge: confirm each explains itself and stays on screen
 5. Win stage one → take a specific reward card, note its name
 6. Confirm you draw that card during stage two
 7. Win stage two → Shrine → **Sharpen**, pick a card, confirm the `+` and the higher numbers

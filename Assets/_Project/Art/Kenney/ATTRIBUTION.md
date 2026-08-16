@@ -1,7 +1,7 @@
 # Third-party art
 
 All visual assets in this folder are by **Kenney** (<https://kenney.nl>) and released under
-**Creative Commons CC0 1.0 Universal** — public domain. No attribution is legally required;
+**Creative Commons CC0 1.0 Universal**: public domain. No attribution is legally required;
 it is given here because crediting the people whose work you ship is the decent thing to do.
 
 | File | Source pack |
