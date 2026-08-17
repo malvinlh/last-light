@@ -42,7 +42,7 @@ not inferred from a passing test.
 
 ## Explicitly not built
 
-Documented in the README rather than left for the reviewer to discover: multiple enemies per
+Documented in the README: multiple enemies per
 encounter, relics or passive items, save/load between sessions, a branching map, sound effects,
 localisation, gamepad input, procedural encounter generation.
 
