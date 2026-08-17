@@ -294,18 +294,15 @@ Roughly in the order I'd pick them up:
    architecture is already right for the fix, since the controller emits an event stream, so this is
    a presentation side queue that replays those events with delays and blocks input while it plays.
    It's the single biggest gap between this and something that feels finished.
-2. **Make scene generation idempotent, or stop generating scenes.** Most likely by generating prefabs
-   and composing a thin hand authored scene from them, so regenerating touches prefabs whose ids stay
-   stable.
-3. **More enemies and a real encounter table**, so a run isn't the same three fights every time. The
+2. **More enemies and a real encounter table**, so a run isn't the same three fights every time. The
    data model already supports it; it's content plus a weighted picker.
-4. **A reward pool weighted by rarity**, plus a "remove a card" reward, so thinning your deck
+3. **A reward pool weighted by rarity**, plus a "remove a card" reward, so thinning your deck
    competes with growing it as a strategy.
-5. **Balance from data.** A headless simulator that plays a few thousand runs with a simple policy
+4. **Balance from data.** A headless simulator that plays a few thousand runs with a simple policy
    and reports win rate per stage. The seeded RNG and the MonoBehaviour free rules layer make this
    cheap to write, and it would replace my guesses about the boss ramp with numbers.
-6. **Per card artwork.** `CardDefinition` already has an `artwork` field and nothing fills it.
-7. **Keyboard support**: number keys to play cards, space to end the turn, and some way to reach the
+5. **Per card artwork.** `CardDefinition` already has an `artwork` field and nothing fills it.
+6. **Keyboard support**: number keys to play cards, space to end the turn, and some way to reach the
    hover explanations without a mouse.
 
 ## Known Issues
