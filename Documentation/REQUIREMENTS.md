@@ -29,7 +29,7 @@ not inferred from a passing test.
 | M17 | All gameplay code is my own | Yes | n/a | n/a | Only third-party content is CC0 art; see `ATTRIBUTION.md` |
 | M18 | No paid or inaccessible dependencies | Yes | n/a | n/a | `Packages/manifest.json` is Unity packages only |
 | M19 | No high-level gameplay framework | Yes | n/a | n/a | FSM, deck, effect system all hand-written |
-| M20 | Free assets for visuals/audio only | Yes | n/a | Yes | Kenney CC0 sprites + one font. Music is synthesised by `Tools/audio/generate_music.py`, so it is original rather than third-party. No third-party logic anywhere. |
+| M20 | Free assets for visuals/audio only | Yes | n/a | Yes | Kenney CC0 sprites + one font. The music is original, synthesised rather than licensed. No third-party logic anywhere. |
 
 ## Stretch goals
 
@@ -50,7 +50,7 @@ localisation, gamepad input, procedural encounter generation.
 
 | Gate | Count | What it covers |
 |---|---|---|
-| EditMode tests | 91 | Rules, with no scene: deck, card play validation, every effect atom, statuses, turn order, run progression, tooltip placement maths, data content signatures |
+| EditMode tests | 92 | Rules, with no scene: deck, card play validation, every effect atom, statuses, turn order, run progression, tooltip placement maths, data content signatures |
 | PlayMode tests | 23 (+1 explicit) | The real scenes driven through real buttons: vertical slice, full run loop, main menu transition, UI layout bounds |
 | `ProjectValidator` | 6 groups | Editor version, build settings, card ids/costs/effects, enemy patterns, run config integrity, scene components |
 | Screenshot fixture | 10 images | Every screen, rendered headlessly from a real playthrough |
