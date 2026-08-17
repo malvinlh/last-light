@@ -324,9 +324,6 @@ Roughly in the order I'd pick them up:
 - **Balance is lightly tuned.** I played the run enough to know it's winnable and losable, not enough
   to call the curve good. The Devouring Dark ramps itself with Kindled, so a slow start against it
   can spiral.
-- **The music is synthesised, not composed.** It's a deliberate ambient drone and it loops seamlessly,
-  but it's two tracks of texture rather than music with structure, and there are no sound effects at
-  all.
 - **Enemy patterns are fixed loops.** Deliberate, since it makes fights learnable and keeps tests
   deterministic, but it does mean a second run against the same enemy holds no surprises.
 - **Cards have no individual art**, only colour coding by type.
