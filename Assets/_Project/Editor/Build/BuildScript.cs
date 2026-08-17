@@ -18,8 +18,12 @@ namespace LastLight.Editor.Build
     /// </remarks>
     public static class BuildScript
     {
-        public const string OutputFolder = "Build/LastLight";
-        public const string ExecutableName = "LastLight.exe";
+        /// <summary>
+        /// Matches what the Build Settings dialog produces, so running this menu item overwrites the
+        /// shipped player rather than leaving a second copy at a path nothing references.
+        /// </summary>
+        public const string OutputFolder = "Build";
+        public const string ExecutableName = "Last Light.exe";
 
         [MenuItem("Last Light/Build Windows Player", priority = 40)]
         public static void BuildWindows()

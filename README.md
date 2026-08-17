@@ -42,8 +42,8 @@ the run that happens. Either way you get a summary of how it went and can start 
 ## How to Run
 
 1. Download or clone this repository.
-2. Open the `Build/LastLight/` folder.
-3. Run `LastLight.exe`.
+2. Open the `Build/` folder.
+3. Run `Last Light.exe`.
 4. Windows SmartScreen will warn you the executable is unsigned. Choose *More info*, then
    *Run anyway*.
 5. Click **Begin the Watch**. It's mouse only: click a card to play it, click **End Turn** when
@@ -52,8 +52,8 @@ the run that happens. Either way you get a summary of how it went and can start 
 The game opens in a 1600x900 window, is resizable, and the UI scales to any resolution.
 
 - Engine & version used: **Unity 6000.0.75f1**, C#, Universal Render Pipeline (2D Renderer)
-- Build location: **`/Build/LastLight/LastLight.exe`** (also mirrored at
-  `TODO: Google Drive link to be added before submission`, a 36 MB zip)
+- Build location: **`/Build/Last Light.exe`** (also mirrored as a zip on
+  [Google Drive](https://drive.google.com/file/d/1QtuJsvexN4OLc94chDj8g8m1CU4bsnSo/view?usp=sharing))
 
 If you'd rather open the project than the build, open the repository folder with Unity 6000.0.75f1,
 then open `Assets/_Project/Scenes/MainMenu.unity` and press Play.

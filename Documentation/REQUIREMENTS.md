@@ -3,7 +3,7 @@
 Every requirement in the brief, audited against what actually shipped. Re-read the brief and walked
 this line by line on **17 Aug 2026**, after the Windows build was produced.
 
-**Verified in build** means observed by running `Build/LastLight/LastLight.exe` outside the Editor,
+**Verified in build** means observed by running `Build/Last Light.exe` outside the Editor,
 not inferred from a passing test.
 
 ## Mandatory
@@ -12,7 +12,7 @@ not inferred from a passing test.
 |---|---|---|---|---|---|
 | M1 | Unity Engine, editor `6000.0.75f1` | Yes | Yes | Yes | `ProjectSettings/ProjectVersion.txt`; asserted by `ProjectValidator`; player log line `Initialize engine version: 6000.0.75f1` |
 | M2 | 2D PC game | Yes | Yes | Yes | URP 2D renderer, orthographic camera, sprite actors; `Documentation/screenshots/` |
-| M3 | Windows `.exe` build | Yes | Yes | Yes | `Build/LastLight/LastLight.exe`, 99 MB, built by `BuildScript`; launched and played |
+| M3 | Windows `.exe` build | Yes | Yes | Yes | `Build/Last Light.exe`, 94 MB, built by `BuildScript`; launched and played |
 | M4 | Turn-based | Yes | Yes | Yes | `CombatPhase` machine; `TurnFlowTests.ThePhasesRunInTheDocumentedOrder` |
 | M5 | Player actions driven by cards from a hand | Yes | Yes | Yes | `TryPlayCard` is the only action verb; End Turn is the only other input |
 | M6 | Run-based structure | Yes | Yes | Yes | `RunController` + `RunState`; `RunLoopTests` walks a full run |
@@ -24,7 +24,7 @@ not inferred from a passing test.
 | M12 | Start a new run after finishing | Yes | Yes | Yes | **New Run** on the summary; `NewRunFromTheSummaryResetsEverything` |
 | M13 | Full project source in the repo | Yes | n/a | n/a | `Assets/`, `Packages/`, `ProjectSettings/` all tracked |
 | M14 | Root `README.md` in the brief's structure | Yes | n/a | n/a | Five required sections, in order |
-| M15 | Build in `/Build/` or an external link | Yes (both) | n/a | Yes | `/Build/LastLight/` committed; 36 MB mirror zip prepared |
+| M15 | Build in `/Build/` or an external link | Yes (both) | n/a | Yes | `/Build/` committed; same build mirrored as a zip on Google Drive |
 | M16 | Meaningful commit history | Yes | n/a | n/a | 60+ commits across five milestones, no squashing |
 | M17 | All gameplay code is my own | Yes | n/a | n/a | Only third-party content is CC0 art; see `ATTRIBUTION.md` |
 | M18 | No paid or inaccessible dependencies | Yes | n/a | n/a | `Packages/manifest.json` is Unity packages only |
